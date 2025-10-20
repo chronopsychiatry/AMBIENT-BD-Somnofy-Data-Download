@@ -5,7 +5,7 @@ setup(
     version='0.4.0',
     description='Download data from Somnofy devices',
     long_description_content_type="text/markdown",
-    url='https://github.com/chronopsychiatry/Ambient-BD-VitalThings-API-Data-Access',
+    url='https://github.com/chronopsychiatry/AMBIENT-BD-Somnofy-Data-Download',
     packages=find_packages(),
     python_requires='>=3.10',
     install_requires=[
