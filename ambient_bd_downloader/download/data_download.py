@@ -61,7 +61,8 @@ class DataDownloader:
             reports = pd.concat([reports, self._make_session_report(s_json)], ignore_index=True)
 
             if self._should_store_epoch_data(s):
-                epoch_data = pd.concat([epoch_data, self.make_epoch_data_frame_from_session(s_json)], ignore_index=True)
+                epoch_data = pd.concat([epoch_data, self.make_epoch_data_frame_from_session(s_json)],
+                                       ignore_index=True)
 
             last_session = s
             last_session_json = s_json

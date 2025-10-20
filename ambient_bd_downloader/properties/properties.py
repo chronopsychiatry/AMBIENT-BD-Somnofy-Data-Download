@@ -5,7 +5,8 @@ from pathlib import Path
 
 class Properties():
     def __init__(self,
-                 client_id_file: str | Path = None,
+                 credentials_file: str | Path = None,
+                 credentials: dict = None,
                  zone_name: str | list[str] = None,
                  device_name: str | list[str] = None,
                  subject_name: str | list[str] = None,
@@ -14,13 +15,12 @@ class Properties():
                  ignore_epoch_for_shorter_than_hours: str | float = None,
                  flag_nights_with_sleep_under_hours: str | float = None):
 
-        self.client_id_file = Path(client_id_file or './client_id.txt')
+        self.credentials_file = Path(credentials_file or './credentials.txt')
+        self.credentials = credentials or {}
         self.zone_name = zone_name
         self.device_name = device_name or '*'
         self.subject_name = subject_name or '*'
         self.download_folder = Path(download_folder or '../downloaded_data')
-        with self.client_id_file.open('r') as f:
-            self.client_id = f.readline().strip(' \t\n\r')
 
         if from_date is None:
             from_date = datetime.datetime.now() - datetime.timedelta(days=14)
@@ -33,7 +33,7 @@ class Properties():
         self.flag_nights_with_sleep_under_hours = float(flag_nights_with_sleep_under_hours or 5)
 
     def __str__(self):
-        return f"Properties(client_id_file={self.client_id_file}, " \
+        return f"Properties(credentials_file={self.credentials_file}, " \
                f"zone_name={self.zone_name}, " \
                f"device_name={self.device_name}, subject_name={self.subject_name}, " \
                f"download_folder={self.download_folder}, from_date={self.from_date}, " \
@@ -49,7 +49,8 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
     else:
         raise ValueError(f"Properties file not found: {file_path}. Run generate_config to create it.")
     return Properties(
-        client_id_file=config['DEFAULT'].get('client-id-file', None),
+        credentials_file=config['DEFAULT'].get('credentials-file', None),
+        credentials=load_credentials(config['DEFAULT'].get('credentials-file', None)),
         zone_name=[zone.strip() for zone in config['DEFAULT'].get('zone').split(',')],
         device_name=[device.strip() for device in config['DEFAULT'].get('device').split(',')],
         subject_name=[subject.strip() for subject in config['DEFAULT'].get('subject').split(',')],
@@ -58,3 +59,17 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         ignore_epoch_for_shorter_than_hours=config['DEFAULT'].get('ignore-epoch-for-shorter-than-hours', None),
         flag_nights_with_sleep_under_hours=config['DEFAULT'].get('flag-nights-with-sleep-under-hours', None)
     )
+
+
+def load_credentials(credentials_file: str | Path) -> dict:
+    file_path = Path(credentials_file)
+    if not file_path.exists():
+        raise ValueError(f"Credentials file not found: {file_path}.")
+    creds = {}
+    with file_path.open('r') as f:
+        for line in f:
+            line = line.strip()
+            if line and '=' in line:
+                key, value = line.split('=', 1)
+                creds[key.strip()] = value.strip()
+    return (creds)
