@@ -25,7 +25,7 @@ class TestSomnofy:
     @patch('ambient_bd_downloader.sf_api.somnofy.requests.post')
     @patch('ambient_bd_downloader.sf_api.somnofy.Somnofy.get_zone_id', return_value=1)
     def test_init(self, mock_requests_post, mock_get_zone_id):
-        properties = MockProperties(credentials={'client_id': 'test_client_id', 'client_secret': 'test_client_secret',
+        properties = MockProperties(credentials={'client-id': 'test_client_id', 'client-secret': 'test_client_secret',
                                                  'username': 'test_username', 'password': 'test_password'},
                                     credentials_file=Path('/path/to/credentials_file.txt'),
                                     zone_name='test_zone')
@@ -42,7 +42,7 @@ class TestSomnofy:
     @patch('ambient_bd_downloader.sf_api.somnofy.Somnofy.get_access_token')
     def test_get_headers(self, mock_get_access_token):
         mock_get_access_token.return_value = 'token123'
-        properties = MockProperties(credentials={'client_id': 'cid', 'client_secret': 'csecret',
+        properties = MockProperties(credentials={'client-id': 'cid', 'client-secret': 'csecret',
                                                  'username': 'uname', 'password': 'pw'},
                                     credentials_file=Path('/path/to/credentials_file.txt'),
                                     zone_name='test_zone')
@@ -101,7 +101,7 @@ class TestSomnofy:
         }
         mock_requests_get.return_value = mock_response
 
-        properties = MockProperties(credentials={'client_id': 'test_client_id', 'client_secret': 'test_client_secret',
+        properties = MockProperties(credentials={'client-id': 'test_client_id', 'client-secret': 'test_client_secret',
                                                  'username': 'test_username', 'password': 'test_password'},
                                     credentials_file=Path('/path/to/credentials_file.txt'),
                                     zone_name='test_zone')

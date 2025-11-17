@@ -28,8 +28,8 @@ class Somnofy:
     def get_headers(self, properties: Properties) -> dict:
         creds = properties.credentials
         token = self.get_access_token(
-            client_id=creds['client_id'],
-            client_secret=creds['client_secret'],
+            client_id=creds['client-id'],
+            client_secret=creds['client-secret'],
             username=creds['username'],
             password=creds['password']
         )

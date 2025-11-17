@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ambient_bd_downloader',
-    version='0.4.0',
+    version='0.5.0',
     description='Download data from Somnofy devices',
     long_description_content_type="text/markdown",
     url='https://github.com/chronopsychiatry/AMBIENT-BD-Somnofy-Data-Download',

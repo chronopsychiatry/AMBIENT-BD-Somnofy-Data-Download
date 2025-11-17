@@ -67,6 +67,9 @@ class DataDownloader:
             last_session = s
             last_session_json = s_json
 
+        reports.insert(0, 'participant_id', subject_identity)
+        epoch_data.insert(0, 'participant_id', subject_identity)
+
         if len(sessions) == 0:
             return
         if not last_session or not last_session.session_end:
