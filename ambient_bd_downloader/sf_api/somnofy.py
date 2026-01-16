@@ -1,6 +1,11 @@
 import datetime
-import requests
+from requests_oauthlib import OAuth2Session
+from os import urandom
+import base64
+import hashlib
+import webbrowser
 import logging
+from pathlib import Path
 
 from ambient_bd_downloader.sf_api.dom import Subject, Session
 from ambient_bd_downloader.properties.properties import Properties
@@ -14,7 +19,11 @@ class Somnofy:
 
     def __init__(self, properties: Properties):
         self._logger = logging.getLogger('Somnofy')
-        self.token_endpoint = 'https://auth.somnofy.com/oauth2/token'
+        self.client_id = properties.client_id
+        if not self.client_id:
+            raise ValueError('Client ID must be provided')
+        self.token_file = Path(properties.client_id_file).parent / 'token.txt'
+        self.token_url = 'https://auth.somnofy.com/oauth2/token'
         self.subjects_url = self.API_ENDPOINT + '/subjects'
         self.sessions_url = self.API_ENDPOINT + '/sessions'
         self.reports_url = self.API_ENDPOINT + '/reports'
@@ -23,37 +32,53 @@ class Somnofy:
         self.date_start = '2023-08-01T00:00:00Z'
         self.date_end = datetime.datetime.now().isoformat()
         self.LIMIT = 300
-        self.headers = self.get_headers(properties)
+        self.oauth = self.set_auth(properties.client_id)
 
-    def get_headers(self, properties: Properties) -> dict:
-        creds = properties.credentials
-        token = self.get_access_token(
-            client_id=creds['client-id'],
-            client_secret=creds['client-secret'],
-            username=creds['username'],
-            password=creds['password']
-        )
-        return {
-            "accept": "application/json",
-            "Authorization": f"Bearer {token}"
-        }
+    def set_auth(self, client_id: str):
+        if (oauth := self.auth_with_old_token(client_id)):
+            return oauth
+        else:
+            return self.auth_with_new_token(client_id)
 
-    def get_access_token(self, client_id: str, client_secret: str, username: str, password: str) -> str:
-        response = requests.post(
-            self.token_endpoint,
-            data={
-                "grant_type": "password",
-                "username": username,
-                "password": password,
-            },
-            auth=(client_id, client_secret),
-        )
-        response.raise_for_status()
-        return response.json()['access_token']
+    def auth_with_old_token(self, client_id: str) -> OAuth2Session | None:
+        if self.token_file.exists():
+            with self.token_file.open('r') as f:
+                token = f.read()
+            oauth = OAuth2Session(client_id, token={'access_token': token, 'token_type': 'Bearer'})
+            r = oauth.get(self.subjects_url)  # Test if the token is still valid
+            if r.status_code == 200:
+                self._logger.info('Accessing API with stored token.')
+                return oauth
+            else:
+                self.token_file.unlink(missing_ok=True)
+                print('Token is no longer valid. Please reauthorize.')
+                return None
+
+    def auth_with_new_token(self, client_id: str) -> OAuth2Session:
+        code_verifier = base64.urlsafe_b64encode(urandom(40)).rstrip(b'=').decode('utf-8')
+        code_challenge = base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode('utf-8'))
+                                                  .digest()).rstrip(b'=').decode('utf-8')
+
+        oauth = OAuth2Session(client_id, redirect_uri='https://api.health.somnofy.com/oauth2-redirect')
+        authorization_url, state = oauth.authorization_url('https://auth.somnofy.com/oauth2/authorize',
+                                                           code_challenge=code_challenge,
+                                                           code_challenge_method='S256')
+        print('Please authorize access in your web browser.')
+        webbrowser.open(authorization_url)
+        authorization_response = input('Enter the full URL: ')
+
+        token = oauth.fetch_token(self.token_url,
+                                  authorization_response=authorization_response,
+                                  include_client_id=True,
+                                  code_verifier=code_verifier)
+
+        with self.token_file.open('w') as f:
+            f.write(token['access_token'])
+        return oauth
 
     def get_subjects(self, zone_name: str) -> list[Subject]:
         zone_id = self.get_zone_id(zone_name)
-        r = requests.get(self.subjects_url, headers=self.headers, params={'path': zone_id, 'embed': 'devices'})
+        r = self.oauth.get(self.subjects_url, params={'path': zone_id, 'embed': 'devices'})
         json_list = r.json()["data"]
         return [Subject(subject_data) for subject_data in json_list]
 
@@ -101,7 +126,7 @@ class Somnofy:
         are_more = True
         sessions = []
         while are_more:
-            r = requests.get(self.sessions_url, headers=self.headers, params=params)
+            r = self.oauth.get(self.sessions_url, params=params)
             json_list = r.json()['data']
             sessions += [Session(data) for data in json_list]
             are_more = len(json_list) == self.LIMIT
@@ -112,26 +137,26 @@ class Somnofy:
     def get_session_json(self, session_id: str) -> dict:
         url = f'{self.sessions_url}/{session_id}'
         params = {'include_epoch_data': True}
-        r = requests.get(url, headers=self.headers, params=params)
+        r = self.oauth.get(url, params=params)
         return r.json()
 
     def get_session_report(self, subject_id: str, date: str) -> dict:
         params = {'subjects': subject_id, 'report_date': date}
-        r = requests.get(self.reports_url, headers=self.headers, params=params)
+        r = self.oauth.get(self.reports_url, params=params)
         return r.json()
 
     def get_zone_id(self, zone_name: str) -> str:
-        r = requests.get(self.zones_url, headers=self.headers)
+        r = self.oauth.get(self.zones_url)
         available_zones = {zone['name']: zone['id'] for zone in r.json()['data']}
         if zone_name not in available_zones:
             raise ValueError(f'Zone "{zone_name}" not found. Available zones: {list(available_zones.keys())}')
         return available_zones[zone_name]
 
     def get_all_zones(self) -> list[str]:
-        r = requests.get(self.zones_url, headers=self.headers)
+        r = self.oauth.get(self.zones_url)
         return [zone['name'] for zone in r.json()['data']]
 
     def has_zone_access(self, zone_name: str) -> bool:
         zone_id = self.get_zone_id(zone_name)
-        r = requests.get(self.subjects_url, headers=self.headers, params={'path': zone_id})
+        r = self.oauth.get(self.subjects_url, params={'path': zone_id})
         return True if r.status_code == 200 else False

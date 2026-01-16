@@ -2,7 +2,7 @@ def generate_config():
     with open('ambient_downloader.properties', 'w') as f:
         config = ('[DEFAULT]\n'
                   '# Files and directories\n'
-                  'credentials-file=.\\somnofy_credentials.txt\n'
+                  'client-id-file=.\\client_id.txt\n'
                   'download-dir=.\\downloaded_data\n'
                   '# Data scope\n'
                   'from-date=2021-01-01\n'

@@ -44,18 +44,11 @@ Open the properties file with a text editor to change the parameters (descriptio
 
 #### Files and directories
 
-##### credentials-file
+##### client-id-file
 
-Path to the the `.txt` file containing the credentials to connect to the VitalThings API. The file must only contain client ID, client secret, username and password, as shown below.
+Path to the the `.txt` file containing the client ID. The file must only contain the client ID.
 
-```md
-client_id=YOUR_CLIENT_ID
-client_secret=YOUR_CLIENT_SECRET
-username=YOUR_USERNAME
-password=YOUR_PASSWORD
-```
-
-Default value: `./somnofy_credentials.txt`
+Default value: `./client_id.txt`
 
 ##### download-dir
 

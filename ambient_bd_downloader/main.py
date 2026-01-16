@@ -29,7 +29,7 @@ def main():
 
     from_date = properties.from_date
 
-    logger.info(f'Accessing somnofy with credentials stored at: {properties.credentials_file}')
+    logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
     somnofy = Somnofy(properties)
 
     zones_to_access = somnofy.get_all_zones() if properties.zone_name == ['*'] else properties.zone_name
