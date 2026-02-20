@@ -10,3 +10,6 @@ download.log
 *.csv
 .vscode
 .pytest_cache
+
+.direnv/
+.envrc
