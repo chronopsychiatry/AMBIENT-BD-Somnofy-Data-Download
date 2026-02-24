@@ -43,6 +43,7 @@ def main():
 
         subjects = somnofy.select_subjects(zone_name=zone,
                                            subject_name=properties.subject_name,
+                                           exclude_subjects=properties.exclude_subjects,
                                            device_name=properties.device_name)
         for u in subjects:
             logger.info(f"{u}")

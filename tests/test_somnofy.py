@@ -84,7 +84,7 @@ class TestSomnofy:
                  'devices': {'data': [{'name': 'VT001'}]}}),
         Subject({'id': '2', 'identifier': 'subject2', 'created_at': '2023-01-02T00:00:00',
                  'devices': {'data': [{'name': 'VT002'}]}}),
-        Subject({'id': '3', 'identifier': 'subject3', 'created_at': '2023-01-03T00:00:00',
+        Subject({'id': '3', 'identifier': 'Test subject3', 'created_at': '2023-01-03T00:00:00',
                  'devices': {'data': [{'name': 'VT003'}]}})
     ])
     def test_select_subjects(self, mock_get_subjects, mock_get_zone_id, mock_set_auth):
@@ -94,6 +94,8 @@ class TestSomnofy:
         somnofy = Somnofy(properties)
 
         subjects = somnofy.select_subjects(zone_name='test_zone', subject_name='subject2', device_name='*')
-
         assert len(subjects) == 1
         assert subjects[0].identifier == 'subject2'
+
+        subjects = somnofy.select_subjects(zone_name='test_zone', exclude_subjects='Test')
+        assert len(subjects) == 2

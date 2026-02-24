@@ -82,13 +82,13 @@ class Somnofy:
         json_list = r.json()["data"]
         return [Subject(subject_data) for subject_data in json_list]
 
-    def select_subjects(self, zone_name: str, subject_name: str = '*', device_name: str = '*') -> list[Subject]:
+    def select_subjects(self, zone_name: str, subject_name: str = '*', exclude_subjects: str = '*', device_name: str = '*') -> list[Subject]:
         subjects = self.get_subjects(zone_name)
         selected_subjects = []
         for subject in subjects:
             if ((subject.identifier in subject_name or '*' in subject_name)
                     and (subject.device in device_name or '*' in device_name)
-                and ('Test' not in subject.identifier)):
+                and (exclude_subjects not in subject.identifier or exclude_subjects == "*")):
                 selected_subjects.append(subject)
         return selected_subjects
 

@@ -9,6 +9,7 @@ class Properties():
                  zone_name: str | list[str] = None,
                  device_name: str | list[str] = None,
                  subject_name: str | list[str] = None,
+                 exclude_subjects: str = None,
                  download_folder: str | Path = '../downloaded_data',
                  from_date: str | datetime.date = None,
                  ignore_epoch_for_shorter_than_hours: str | float = None,
@@ -18,6 +19,7 @@ class Properties():
         self.zone_name = zone_name
         self.device_name = device_name or '*'
         self.subject_name = subject_name or '*'
+        self.exclude_subjects = exclude_subjects or '*'
         self.download_folder = Path(download_folder or '../downloaded_data')
         with self.client_id_file.open('r') as f:
             self.client_id = f.readline().strip(' \t\n\r')
@@ -36,6 +38,7 @@ class Properties():
         return f"Properties(client_id_file={self.client_id_file}, " \
                f"zone_name={self.zone_name}, " \
                f"device_name={self.device_name}, subject_name={self.subject_name}, " \
+               f"exclude_subjects={self.exclude_subjects}, " \
                f"download_folder={self.download_folder}, from_date={self.from_date}, " \
                f"ignore_epoch_for_shorter_than_hours={self.ignore_epoch_for_shorter_than_hours}, " \
                f"flag_nights_with_sleep_under_hours={self.flag_nights_with_sleep_under_hours})"
@@ -53,6 +56,7 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         zone_name=[zone.strip() for zone in config['DEFAULT'].get('zone').split(',')],
         device_name=[device.strip() for device in config['DEFAULT'].get('device').split(',')],
         subject_name=[subject.strip() for subject in config['DEFAULT'].get('subject').split(',')],
+        exclude_subjects=config['DEFAULT'].get('exclude-subjects', None),
         download_folder=config['DEFAULT'].get('download-dir', None),
         from_date=config['DEFAULT'].get('from-date', None),
         ignore_epoch_for_shorter_than_hours=config['DEFAULT'].get('ignore-epoch-for-shorter-than-hours', None),

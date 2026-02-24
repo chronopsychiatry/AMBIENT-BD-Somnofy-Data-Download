@@ -9,6 +9,7 @@ def generate_config():
                   'zone=ABD Pilot\n'
                   'device=*\n'
                   'subject=*\n'
+                  'exclude-subjects=*\n'
                   '# Filtering\n'
                   'ignore-epoch-for-shorter-than-hours=2\n'
                   'flag-nights-with-sleep-under-hours=5'

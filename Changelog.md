@@ -1,4 +1,8 @@
-# 0.3.0 (in dev)
+# 0.6.1 (24/02/2026)
+
+- Added a config option "exclude-subjects" to exclude certain subjects from the download based on their identifier (e.g. `exclude-subjects=Test` will exclude all subjects that have "Test" in their identifier)
+
+# 0.3.0
 
 - Changed Sessions and Epochs filenames to match the Ambient-BD naming convention
 
