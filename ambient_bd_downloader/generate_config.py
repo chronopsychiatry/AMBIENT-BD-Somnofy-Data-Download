@@ -1,17 +1,30 @@
+config_template = """
+[DEFAULT]
+# Files and directories
+client-id-file=.\\client_id.txt
+download-dir=.\\downloaded_data
+# Data scope
+from-date=2021-01-01
+zone=ABD Pilot
+device=*
+subject=*
+exclude-subjects=*
+            
+[DOWNLOAD]
+# Filtering
+ignore-epoch-for-shorter-than-hours=2
+flag-nights-with-sleep-under-hours=5
+
+[QUALITY_REPORT]
+min-distance=0.4
+max-distance=1.5
+min-signal-quality=4
+max-fraction-no-presence=0.2
+max-fraction-awake=0.3
+min-session-separation=15
+"""
+
 def generate_config():
     with open('ambient_downloader.properties', 'w') as f:
-        config = ('[DEFAULT]\n'
-                  '# Files and directories\n'
-                  'client-id-file=.\\client_id.txt\n'
-                  'download-dir=.\\downloaded_data\n'
-                  '# Data scope\n'
-                  'from-date=2021-01-01\n'
-                  'zone=ABD Pilot\n'
-                  'device=*\n'
-                  'subject=*\n'
-                  'exclude-subjects=*\n'
-                  '# Filtering\n'
-                  'ignore-epoch-for-shorter-than-hours=2\n'
-                  'flag-nights-with-sleep-under-hours=5'
-                  )
+        config = (config_template)
         f.write(config)

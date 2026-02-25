@@ -13,7 +13,14 @@ class Properties():
                  download_folder: str | Path = '../downloaded_data',
                  from_date: str | datetime.date = None,
                  ignore_epoch_for_shorter_than_hours: str | float = None,
-                 flag_nights_with_sleep_under_hours: str | float = None):
+                 flag_nights_with_sleep_under_hours: str | float = None,
+                 min_distance: float = None,
+                 max_distance: float = None,
+                 min_signal_quality: float = None,
+                 max_fraction_no_presence: float = None,
+                 max_fraction_awake: float = None,
+                 min_session_separation: float = None
+                 ):
 
         self.client_id_file = Path(client_id_file or './client_id.txt')
         self.zone_name = zone_name
@@ -33,15 +40,15 @@ class Properties():
 
         self.ignore_epoch_for_shorter_than_hours = float(ignore_epoch_for_shorter_than_hours or 2)
         self.flag_nights_with_sleep_under_hours = float(flag_nights_with_sleep_under_hours or 5)
+        self.min_distance = min_distance
+        self.max_distance = max_distance
+        self.min_signal_quality = min_signal_quality
+        self.max_fraction_no_presence = max_fraction_no_presence
+        self.max_fraction_awake = max_fraction_awake
+        self.min_session_separation = min_session_separation
 
     def __str__(self):
-        return f"Properties(client_id_file={self.client_id_file}, " \
-               f"zone_name={self.zone_name}, " \
-               f"device_name={self.device_name}, subject_name={self.subject_name}, " \
-               f"exclude_subjects={self.exclude_subjects}, " \
-               f"download_folder={self.download_folder}, from_date={self.from_date}, " \
-               f"ignore_epoch_for_shorter_than_hours={self.ignore_epoch_for_shorter_than_hours}, " \
-               f"flag_nights_with_sleep_under_hours={self.flag_nights_with_sleep_under_hours})"
+        return f"Properties({', '.join(f'{k}={v}' for k, v in vars(self).items() if k != 'client_id')})"
 
 
 def load_application_properties(file_path: str | Path = './ambient_downloader.properties'):
@@ -59,6 +66,12 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         exclude_subjects=config['DEFAULT'].get('exclude-subjects', None),
         download_folder=config['DEFAULT'].get('download-dir', None),
         from_date=config['DEFAULT'].get('from-date', None),
-        ignore_epoch_for_shorter_than_hours=config['DEFAULT'].get('ignore-epoch-for-shorter-than-hours', None),
-        flag_nights_with_sleep_under_hours=config['DEFAULT'].get('flag-nights-with-sleep-under-hours', None)
+        ignore_epoch_for_shorter_than_hours=config['DOWNLOAD'].get('ignore-epoch-for-shorter-than-hours', None),
+        flag_nights_with_sleep_under_hours=config['DOWNLOAD'].get('flag-nights-with-sleep-under-hours', None),
+        min_distance=config['QUALITY_REPORT'].get('min-distance', None),
+        max_distance=config['QUALITY_REPORT'].get('max-distance', None),
+        min_signal_quality=config['QUALITY_REPORT'].get('min-signal-quality', None),
+        max_fraction_no_presence=config['QUALITY_REPORT'].get('max-fraction-no-presence', None),
+        max_fraction_awake=config['QUALITY_REPORT'].get('max-fraction-awake', None),
+        min_session_separation=config['QUALITY_REPORT'].get('min-session-separation', None)
     )

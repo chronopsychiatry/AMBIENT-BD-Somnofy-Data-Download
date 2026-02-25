@@ -12,6 +12,7 @@ from ambient_bd_downloader.sf_api.somnofy import Somnofy
 
 class DataDownloader:
     def __init__(self, somnofy: Somnofy, resolver: PathsResolver = None,
+                 qc=QualityChecker(),
                  compliance=ComplianceChecker(),
                  ignore_epoch_for_shorter_than_hours=2,
                  filter_shorter_than_hours=5):
@@ -82,6 +83,28 @@ class DataDownloader:
         compliance_info = self._compliance_checker.calculate_compliance(reports, dates)
         self.save_compliance_info(compliance_info, subject_identity, dates)
         self.save_last_session(last_session_json, subject_identity)
+
+    def save_quality_reports(self, subject_list: list[Subject], start_date):
+        for sub in subject_list:
+            subject_flags = set()
+            sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date)
+
+            if len(sessions) == 0:
+                self._logger.info(f'No sessions found for subject {subject_identity} between {start_date} and now')
+                continue
+
+            for s in sessions:
+                if self._is_in_progress(s, subject.identifier):
+                    continue
+
+                s_json = self._somnofy.get_session_json(s.session_id).get('data')
+                if s_json.get('sleep_period') == 0:
+                    continue
+                # s_df = self._make_session_report(s_json)
+                # e_df = self.make_epoch_data_frame_from_session(s_json)
+
+                subject_flags.update(qc.get_flags(s_json))
+            
 
     def _should_store_epoch_data(self, session: Session) -> bool:
         return (not self.ignore_epoch_for_shorter_than_hours or

@@ -16,7 +16,8 @@ setup(
     entry_points={
         'console_scripts': [
             'ambient_download=ambient_bd_downloader:main.main',
-            'ambient_generate_config=ambient_bd_downloader:generate_config.generate_config'
+            'ambient_generate_config=ambient_bd_downloader:generate_config.generate_config',
+            'ambient_quality_report=ambient_bd_downloader:quality_report.quality_report'
         ],
     },
 )

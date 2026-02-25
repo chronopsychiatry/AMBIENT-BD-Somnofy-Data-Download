@@ -13,3 +13,5 @@ download.log
 
 .direnv/
 .envrc
+
+*~
