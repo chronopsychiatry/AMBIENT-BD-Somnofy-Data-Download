@@ -4,6 +4,7 @@ import pkg_resources
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
 from ambient_bd_downloader.storage.paths_resolver import PathsResolver
+from ambient_bd_downloader.download.quality_checker import QualityChecker
 from ambient_bd_downloader.properties.properties import load_application_properties
 
 def quality_report():
@@ -32,6 +33,15 @@ def quality_report():
     
     logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
     somnofy = Somnofy(properties)
+    qc = QualityChecker(
+        min_distance=properties.min_distance,
+        max_distance=properties.max_distance,
+        min_signal_quality=properties.min_signal_quality,
+        max_fraction_no_presence=properties.max_fraction_no_presence,
+        max_fraction_awake=properties.max_fraction_awake,
+        min_session_separation=properties.min_session_separation,
+        max_split_sessions=properties.max_split_sessions
+    )
 
     zones_to_access = somnofy.get_all_zones() if properties.zone_name == ['*'] else properties.zone_name
 
@@ -50,4 +60,6 @@ def quality_report():
             logger.info(f"{u}")
 
         resolver = PathsResolver(properties.download_folder / zone)
-        
+        downloader = DataDownloader(somnofy, resolver=resolver, qc=qc)
+
+        downloader.save_quality_reports(subjects, properties.from_date)

@@ -6,22 +6,24 @@ from pathlib import Path
 
 from ambient_bd_downloader.sf_api.dom import Subject, Session
 from ambient_bd_downloader.download.compliance import ComplianceChecker
+from ambient_bd_downloader.download.quality_checker import QualityChecker
 from ambient_bd_downloader.storage.paths_resolver import PathsResolver
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
 
 
 class DataDownloader:
-    def __init__(self, somnofy: Somnofy, resolver: PathsResolver = None,
-                 qc=QualityChecker(),
+    def __init__(self,
+                 somnofy: Somnofy,
+                 resolver: PathsResolver = PathsResolver(),
+                 qc: QualityChecker = QualityChecker(),
                  compliance=ComplianceChecker(),
                  ignore_epoch_for_shorter_than_hours=2,
                  filter_shorter_than_hours=5):
         if not somnofy:
             raise ValueError('Somnofy connection must be provided')
         self._somnofy = somnofy
-        if not resolver:
-            resolver = PathsResolver()
         self._resolver = resolver
+        self.qc = qc
         self._timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
         self._compliance_checker = compliance
         self._compliance_checker.flag_shorter_than_hours = filter_shorter_than_hours
@@ -84,27 +86,46 @@ class DataDownloader:
         self.save_compliance_info(compliance_info, subject_identity, dates)
         self.save_last_session(last_session_json, subject_identity)
 
-    def save_quality_reports(self, subject_list: list[Subject], start_date):
+    def save_quality_reports(self, subject_list: list[Subject], start_date: str):
+        subject_qc = pd.DataFrame()
+        session_qc = pd.DataFrame()
+        
         for sub in subject_list:
             subject_flags = set()
-            sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date)
+            sessions = self._somnofy.get_all_sessions_for_subject(sub.id, start_date)
 
             if len(sessions) == 0:
-                self._logger.info(f'No sessions found for subject {subject_identity} between {start_date} and now')
+                self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and now')
                 continue
 
+            last_session = None
+            n_split = 0
+
             for s in sessions:
-                if self._is_in_progress(s, subject.identifier):
+                if self._is_in_progress(s, sub.identifier):
                     continue
 
                 s_json = self._somnofy.get_session_json(s.session_id).get('data')
                 if s_json.get('sleep_period') == 0:
                     continue
-                # s_df = self._make_session_report(s_json)
-                # e_df = self.make_epoch_data_frame_from_session(s_json)
 
-                subject_flags.update(qc.get_flags(s_json))
-            
+                if last_session:
+                    n_split += self.qc.is_split_session(s_json, last_session)
+                metrics = self.qc.get_metrics(s_json)
+                flags = self.qc.get_flags(metrics, n_split)
+
+                if len(flags) > 0:
+                    subject_flags.update(flags)
+                    session_qc = self.qc.update_session_qc(session_qc, metrics, flags, sub)
+
+                last_session = s_json
+
+            if len(subject_flags) > 0:
+                n_sessions_flagged = len(session_qc.query("participant_id == @sub.identifier"))
+                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_sessions_flagged, sub)
+
+        self.save_session_qc(session_qc)
+        self.save_subject_qc(subject_qc)
 
     def _should_store_epoch_data(self, session: Session) -> bool:
         return (not self.ignore_epoch_for_shorter_than_hours or
@@ -170,6 +191,14 @@ class DataDownloader:
     def save_reports(self, reports: pd.DataFrame, subject_id: str):
         path = self._reports_file(subject_id)
         reports.to_csv(path, index=False)
+
+    def save_session_qc(self, session_qc: pd.DataFrame):
+        path = self._resolver.get_main_dir() / 'Session_qc.csv'
+        session_qc.to_csv(path, index=False)
+
+    def save_subject_qc(self, subject_qc: pd.DataFrame):
+        path = self._resolver.get_main_dir() / "Participant_qc.csv"
+        subject_qc.to_csv(path, index=False)
 
     def _reports_file(self, subject_id: str) -> Path:
         return self._resolver.get_subject_data_dir(subject_id) / f'{subject_id}_SOM-Sess_{self._timestamp}.csv'

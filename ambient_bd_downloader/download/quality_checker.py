@@ -1,29 +1,138 @@
 import numpy as np
+import datetime
+import pandas as pd
+import logging
 
 from ambient_bd_downloader.storage.paths_resolver import PathsResolver
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
+from ambient_bd_downloader.sf_api.dom import Subject
 
 class QualityChecker:
     """
     Run quality checks on the Somnofy data and output flagged sessions in csv format
     """
     def __init__(self,
-                 min_distance=0.4,
-                 max_distance=1.5,
-                 min_signal_quality=4,
-                 max_fraction_no_presence=0.2,
-                 max_fraction_awake=0.3,
-                 min_session_separation=15):
+                 min_distance: float = 0.4,
+                 max_distance: float = 1.5,
+                 min_signal_quality: float = 4,
+                 max_fraction_no_presence: float = 0.2,
+                 max_fraction_awake: float = 0.3,
+                 min_session_separation: float = 15,
+                 max_split_sessions: int = 2):
+        self.min_distance = min_distance
+        self.max_distance = max_distance
+        self.min_signal_quality = min_signal_quality
+        self.max_fraction_no_presence = max_fraction_no_presence
+        self.max_fraction_awake = max_fraction_awake
+        self.min_session_separation = min_session_separation
+        self.max_split_sessions = max_split_sessions
         self._logger = logging.getLogger('QualityChecker')
+
+    def get_metrics(self, session_json: dict) -> dict:
+        """
+        Calculate quality-control metrics for the session
+
+        Parameters:
+        session_json (dict): The session in json format
+
+        Returns:
+        dict: The computed metrics
+        """
+        metrics = dict()
+
+        metrics['id'] = session_json.get('id')
+        metrics['distance'] = session_json.get('distance_during_sleep_mean')
+        metrics['signal_quality'] = session_json.get('epoch_data').get('signal_quality_mean')
+        metrics['signal_quality_mean'] = np.mean(metrics['signal_quality'])
+        metrics['frac_no_presence'] = session_json.get('time_in_no_presence') / session_json.get('time_in_bed')
+        metrics['frac_awake'] = (session_json.get('time_in_bed') - session_json.get('time_asleep')) / session_json.get('time_in_bed')
+
+        return metrics
         
-    def get_flags(session_json):
-        flags = set()
-        dist = session_json.get('distance_during_sleep_mean')
-        # Signal quality: calculate % of points under threshold
-        signal_quality = session_json.get('epoch_data').get('signal_quality_mean')
+    def get_flags(self, metrics, n_split) -> list:
+        """
+        Get a list of flags from metrics based on the QualityChecker thresholds.
 
-        if (dist < min_distance) or (dist > max_distance):
-            flags.add("distance")
+        Args:
+        metrics (dict): data quality metrics calculated with `get_metrics`
+        n_split: total number of split sessions recorded for the current subject
 
-        if sum(signal_quality < 4) > (0.8 * length(signal_quality)):
-            flags.add("signal_quality")
+        Returns:
+        list: a list of flags that were raised
+        """
+        flags = []
+
+        if (metrics['distance'] < self.min_distance) or (metrics['distance'] > self.max_distance):
+            flags.append("distance")
+
+        if sum(i < self.min_signal_quality for i in metrics['signal_quality']) / len(metrics['signal_quality']) > 0.8:
+            flags.append("signal_quality")
+
+        if metrics['frac_no_presence'] > self.max_fraction_no_presence:
+            flags.append("fraction_no_presence")
+
+        if metrics['frac_awake'] > self.max_fraction_awake:
+            flags.append("fraction_awake")
+
+        if n_split > self.max_split_sessions:
+            flags.append("split_sessions")
+
+        return flags
+
+    def is_split_session(self, session_json, last_session) -> bool:
+        """
+        Determine if two sessions are separated by less than a threshold
+
+        Parameters:
+        session_json (dict): the current session
+        last_session (dict): the previous session
+
+        Returns:
+        bool: whether the sessions are ''split''
+        """
+        last_end = datetime.datetime.fromisoformat(last_session.get('session_end'))
+        new_start = datetime.datetime.fromisoformat(session_json.get('session_start'))
+        return (new_start - last_end) < datetime.timedelta(minutes=self.min_session_separation)
+
+    def update_session_qc(self, session_qc: pd.DataFrame, metrics: dict, flags: set, subject: Subject) -> pd.DataFrame:
+        """
+        Update the sessions quality control dataframe with session data
+
+        Parameters:
+        session_qc (pd.DataFrame): the dataframe to be updated
+        metrics (dict): the computed metrics for the current session
+        flags (set): the raised flags for the current session
+        subject (Subject): the subject the session belongs to
+
+        Returns:
+        pd.DataFrame: the session_qc DataFrame with a row added for the current session
+        """
+        new_row = metrics.copy()
+        new_row.pop('signal_quality', None)
+        new_row['participant_id'] = subject.identifier
+        new_row['flags'] = ', '.join(flags)
+
+        return pd.concat([session_qc, pd.DataFrame.from_dict([new_row])], ignore_index=True)
+
+    def update_subject_qc(self, subject_qc: pd.DataFrame, subject_flags: set, n_sessions: int, n_sessions_flagged: int, subject: Subject) -> pd.DataFrame:
+        """
+        Update the subjects quality control DataFrame with data for the current subject
+
+        Parameters:
+        subject_qc (pd.DataFrame): the DataFrame to be updated
+        subject_flags (set): all flags raised for the subject
+        n_sessions (int): the total number of sessions for the subject
+        n_sessions_flagged (int): the number of sessions that were flagged for this subject
+        subject (Subject): the current subject
+
+        Returns:
+        pd.DataFrame: the subject_qc DataFrame with a row added for the current subject
+        """
+        new_row = dict()
+        new_row['participant_id'] = subject.identifier
+        new_row['n_sessions_flagged'] = n_sessions_flagged
+        new_row['total_sessions'] = n_sessions
+        new_row['fraction_flagged'] = n_sessions_flagged / n_sessions
+        new_row['flags'] = ', '.join(subject_flags)
+
+        return pd.concat([subject_qc, pd.DataFrame.from_dict([new_row])], ignore_index=True)

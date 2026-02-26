@@ -27,8 +27,6 @@ def main():
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
 
-    from_date = properties.from_date
-
     logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
     somnofy = Somnofy(properties)
 
@@ -54,7 +52,7 @@ def main():
                                     filter_shorter_than_hours=properties.flag_nights_with_sleep_under_hours)
 
         for u in subjects:
-            downloader.save_subject_data(u, from_date)
+            downloader.save_subject_data(u, properties.from_date)
 
 
 if __name__ == '__main__':

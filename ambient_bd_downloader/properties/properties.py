@@ -19,7 +19,8 @@ class Properties():
                  min_signal_quality: float = None,
                  max_fraction_no_presence: float = None,
                  max_fraction_awake: float = None,
-                 min_session_separation: float = None
+                 min_session_separation: float = None,
+                 max_split_sessions: int = None
                  ):
 
         self.client_id_file = Path(client_id_file or './client_id.txt')
@@ -40,12 +41,13 @@ class Properties():
 
         self.ignore_epoch_for_shorter_than_hours = float(ignore_epoch_for_shorter_than_hours or 2)
         self.flag_nights_with_sleep_under_hours = float(flag_nights_with_sleep_under_hours or 5)
-        self.min_distance = min_distance
-        self.max_distance = max_distance
-        self.min_signal_quality = min_signal_quality
-        self.max_fraction_no_presence = max_fraction_no_presence
-        self.max_fraction_awake = max_fraction_awake
-        self.min_session_separation = min_session_separation
+        self.min_distance = float(min_distance)
+        self.max_distance = float(max_distance)
+        self.min_signal_quality = float(min_signal_quality)
+        self.max_fraction_no_presence = float(max_fraction_no_presence)
+        self.max_fraction_awake = float(max_fraction_awake)
+        self.min_session_separation = float(min_session_separation)
+        self.max_split_sessions = int(max_split_sessions)
 
     def __str__(self):
         return f"Properties({', '.join(f'{k}={v}' for k, v in vars(self).items() if k != 'client_id')})"
@@ -73,5 +75,6 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         min_signal_quality=config['QUALITY_REPORT'].get('min-signal-quality', None),
         max_fraction_no_presence=config['QUALITY_REPORT'].get('max-fraction-no-presence', None),
         max_fraction_awake=config['QUALITY_REPORT'].get('max-fraction-awake', None),
-        min_session_separation=config['QUALITY_REPORT'].get('min-session-separation', None)
+        min_session_separation=config['QUALITY_REPORT'].get('min-session-separation', None),
+        max_split_sessions=config['QUALITY_REPORT'].get('max-split-sessions')
     )
