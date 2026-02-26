@@ -94,39 +94,41 @@ class QualityChecker:
         new_start = datetime.datetime.fromisoformat(session_json.get('session_start'))
         return (new_start - last_end) < datetime.timedelta(minutes=self.min_session_separation)
 
-    def update_session_qc(self, session_qc: pd.DataFrame, metrics: dict, flags: set, subject: Subject) -> pd.DataFrame:
+    def update_session_qc(self, session_qc: list[dict], metrics: dict, flags: set, subject: Subject) -> list[dict]:
         """
         Update the sessions quality control dataframe with session data
 
         Parameters:
-        session_qc (pd.DataFrame): the dataframe to be updated
+        session_qc (list[dict]): the list of rows to be updated
         metrics (dict): the computed metrics for the current session
         flags (set): the raised flags for the current session
         subject (Subject): the subject the session belongs to
 
         Returns:
-        pd.DataFrame: the session_qc DataFrame with a row added for the current session
+        list[dict]: the session_qc list with a row added for the current session
         """
         new_row = metrics.copy()
         new_row.pop('signal_quality', None)
         new_row['participant_id'] = subject.identifier
         new_row['flags'] = ', '.join(flags)
 
-        return pd.concat([session_qc, pd.DataFrame.from_dict([new_row])], ignore_index=True)
+        session_qc.append(new_row)
 
-    def update_subject_qc(self, subject_qc: pd.DataFrame, subject_flags: set, n_sessions: int, n_sessions_flagged: int, subject: Subject) -> pd.DataFrame:
+        return session_qc
+
+    def update_subject_qc(self, subject_qc: list[dict], subject_flags: set, n_sessions: int, n_sessions_flagged: int, subject: Subject) -> list[dict]:
         """
         Update the subjects quality control DataFrame with data for the current subject
 
         Parameters:
-        subject_qc (pd.DataFrame): the DataFrame to be updated
+        subject_qc (list[dict]): the list to be updated
         subject_flags (set): all flags raised for the subject
         n_sessions (int): the total number of sessions for the subject
         n_sessions_flagged (int): the number of sessions that were flagged for this subject
         subject (Subject): the current subject
 
         Returns:
-        pd.DataFrame: the subject_qc DataFrame with a row added for the current subject
+        list[dict]: the subject_qc list with an item added for the current subject
         """
         new_row = dict()
         new_row['participant_id'] = subject.identifier
@@ -135,4 +137,6 @@ class QualityChecker:
         new_row['fraction_flagged'] = n_sessions_flagged / n_sessions
         new_row['flags'] = ', '.join(subject_flags)
 
-        return pd.concat([subject_qc, pd.DataFrame.from_dict([new_row])], ignore_index=True)
+        subject_qc.append(new_row)
+
+        return subject_qc

@@ -87,8 +87,8 @@ class DataDownloader:
         self.save_last_session(last_session_json, subject_identity)
 
     def save_quality_reports(self, subject_list: list[Subject], start_date: str):
-        subject_qc = pd.DataFrame()
-        session_qc = pd.DataFrame()
+        subject_qc = []
+        session_qc = []
         
         for sub in subject_list:
             subject_flags = set()
@@ -99,6 +99,7 @@ class DataDownloader:
                 continue
 
             last_session = None
+            n_flags = 0
             n_split = 0
 
             for s in sessions:
@@ -115,14 +116,14 @@ class DataDownloader:
                 flags = self.qc.get_flags(metrics, n_split)
 
                 if len(flags) > 0:
+                    n_flags += 1
                     subject_flags.update(flags)
                     session_qc = self.qc.update_session_qc(session_qc, metrics, flags, sub)
 
                 last_session = s_json
 
             if len(subject_flags) > 0:
-                n_sessions_flagged = len(session_qc.query("participant_id == @sub.identifier"))
-                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_sessions_flagged, sub)
+                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_flags, sub)
 
         self.save_session_qc(session_qc)
         self.save_subject_qc(subject_qc)
@@ -192,13 +193,15 @@ class DataDownloader:
         path = self._reports_file(subject_id)
         reports.to_csv(path, index=False)
 
-    def save_session_qc(self, session_qc: pd.DataFrame):
+    def save_session_qc(self, session_qc: list[dict]):
+        df = pd.DataFrame(session_qc)
         path = self._resolver.get_main_dir() / 'Session_qc.csv'
-        session_qc.to_csv(path, index=False)
+        df.to_csv(path, index=False)
 
-    def save_subject_qc(self, subject_qc: pd.DataFrame):
+    def save_subject_qc(self, subject_qc: list[dict]):
+        df = pd.DataFrame(subject_qc)
         path = self._resolver.get_main_dir() / "Participant_qc.csv"
-        subject_qc.to_csv(path, index=False)
+        df.to_csv(path, index=False)
 
     def _reports_file(self, subject_id: str) -> Path:
         return self._resolver.get_subject_data_dir(subject_id) / f'{subject_id}_SOM-Sess_{self._timestamp}.csv'
