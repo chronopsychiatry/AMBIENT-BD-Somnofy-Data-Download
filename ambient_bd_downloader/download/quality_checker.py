@@ -134,7 +134,7 @@ class QualityChecker:
         new_row['participant_id'] = subject.identifier
         new_row['n_sessions_flagged'] = n_sessions_flagged
         new_row['total_sessions'] = n_sessions
-        new_row['fraction_flagged'] = n_sessions_flagged / n_sessions
+        new_row['fraction_flagged'] = round(n_sessions_flagged / n_sessions, 2)
         new_row['flags'] = ', '.join(subject_flags)
 
         subject_qc.append(new_row)

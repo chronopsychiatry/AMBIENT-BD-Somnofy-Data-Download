@@ -1,4 +1,6 @@
 import datetime
+from tabulate import tabulate
+import pandas as pd
 
 
 def datetime_from_iso_string(string: str) -> datetime.datetime:
@@ -13,8 +15,29 @@ def date_from_iso_string(date_string: str) -> datetime.date:
     return datetime.datetime.fromisoformat(date_string).date()
 
 
+def get_subjects_table(subject_list: list) -> str:
+    """
+    Generate a formatted table from a list of subjects.
+
+    Args:
+        None
+    Returns:
+        str: Formatted table as a string.
+    """
+    data = []
+    for sub in subject_list:
+        data.append(vars(sub))
+    df = pd.DataFrame.from_records(data)
+    return tabulate(df,
+                    headers='keys',
+                    tablefmt='psql'
+                    )
+
+
 class Session:
     def __init__(self, session_data: dict):
+        self.data = session_data
+        self.epoch_data = session_data.get('epoch_data', None)
         self.session_id = session_data['id']
         self.device_serial_number = session_data['device_serial_number']
         self.state = session_data['state']

@@ -97,15 +97,14 @@ class DataDownloader:
             if len(sessions) == 0:
                 self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and now')
                 continue
+            else:
+                self._logger.info(f'Running quality report for subject {sub.identifier} between {start_date} and now ({len(sessions)} sessions)')
 
             last_session = None
             n_flags = 0
             n_split = 0
 
             for s in sessions:
-                if self._is_in_progress(s, sub.identifier):
-                    continue
-
                 s_json = self._somnofy.get_session_json(s.session_id).get('data')
                 if s_json.get('sleep_period') == 0:
                     continue
@@ -194,14 +193,20 @@ class DataDownloader:
         reports.to_csv(path, index=False)
 
     def save_session_qc(self, session_qc: list[dict]):
-        df = pd.DataFrame(session_qc)
+        df = (pd.DataFrame(session_qc)
+              .sort_values('participant_id')
+              )
         path = self._resolver.get_main_dir() / 'Session_qc.csv'
         df.to_csv(path, index=False)
+        self._logger.info(f'Saved Session quality report: {path}')
 
     def save_subject_qc(self, subject_qc: list[dict]):
-        df = pd.DataFrame(subject_qc)
+        df = (pd.DataFrame(subject_qc)
+              .sort_values('fraction_flagged', ascending=False)
+              )
         path = self._resolver.get_main_dir() / "Participant_qc.csv"
         df.to_csv(path, index=False)
+        self._logger.info(f'Saved Subject quality report: {path}')
 
     def _reports_file(self, subject_id: str) -> Path:
         return self._resolver.get_subject_data_dir(subject_id) / f'{subject_id}_SOM-Sess_{self._timestamp}.csv'

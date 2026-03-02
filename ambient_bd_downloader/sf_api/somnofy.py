@@ -92,7 +92,9 @@ class Somnofy:
                 selected_subjects.append(subject)
         return selected_subjects
 
-    def _make_sessions_params(self, limit: int = None,
+    def _make_sessions_params(self,
+                              subject_id: str = None,
+                              limit: int = None,
                               from_date: datetime.date | str = None,
                               to_date: datetime.date | str = None) -> dict:
         if limit is None:
@@ -111,6 +113,9 @@ class Somnofy:
             to_date = to_date.isoformat()
 
         return {
+            'type': 'vitalthings-somnofy-sm100-session',
+            'state': 'ENDED',
+            'subject_id': subject_id,
             'limit': limit,
             'from': from_date,
             'to': to_date,
@@ -121,9 +126,7 @@ class Somnofy:
                                      subject_id: str,
                                      from_date: datetime.date | str = None,
                                      to_date: datetime.date | str = None) -> list[Session]:
-        params = self._make_sessions_params(from_date=from_date, to_date=to_date)
-        params['subject_id'] = subject_id
-        params['type'] = 'vitalthings-somnofy-sm100-session'
+        params = self._make_sessions_params(subject_id=subject_id, from_date=from_date, to_date=to_date)
         are_more = True
         sessions = []
         while are_more:

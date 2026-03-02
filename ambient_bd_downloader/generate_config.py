@@ -9,6 +9,7 @@ zone=ABD Pilot
 device=*
 subject=*
 exclude-subjects=*
+log-level='INFO'
             
 [DOWNLOAD]
 # Filtering

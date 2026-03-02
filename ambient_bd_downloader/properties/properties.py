@@ -12,6 +12,7 @@ class Properties():
                  exclude_subjects: str = None,
                  download_folder: str | Path = '../downloaded_data',
                  from_date: str | datetime.date = None,
+                 log_level:str = 'INFO',
                  ignore_epoch_for_shorter_than_hours: str | float = None,
                  flag_nights_with_sleep_under_hours: str | float = None,
                  min_distance: float = None,
@@ -38,7 +39,7 @@ class Properties():
         if isinstance(from_date, str):
             from_date = datetime.datetime.fromisoformat(from_date)
         self.from_date = from_date
-
+        self.log_level = log_level
         self.ignore_epoch_for_shorter_than_hours = float(ignore_epoch_for_shorter_than_hours or 2)
         self.flag_nights_with_sleep_under_hours = float(flag_nights_with_sleep_under_hours or 5)
         self.min_distance = float(min_distance)
@@ -68,6 +69,7 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         exclude_subjects=config['DEFAULT'].get('exclude-subjects', None),
         download_folder=config['DEFAULT'].get('download-dir', None),
         from_date=config['DEFAULT'].get('from-date', None),
+        log_level=config['DEFAULT'].get('log-level', 'INFO'),
         ignore_epoch_for_shorter_than_hours=config['DOWNLOAD'].get('ignore-epoch-for-shorter-than-hours', None),
         flag_nights_with_sleep_under_hours=config['DOWNLOAD'].get('flag-nights-with-sleep-under-hours', None),
         min_distance=config['QUALITY_REPORT'].get('min-distance', None),

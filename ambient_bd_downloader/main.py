@@ -3,6 +3,7 @@ import pkg_resources
 
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
+from ambient_bd_downloader.sf_api.dom import get_subjects_table
 from ambient_bd_downloader.storage.paths_resolver import PathsResolver
 from ambient_bd_downloader.properties.properties import load_application_properties
 
@@ -14,7 +15,7 @@ def main():
     if not properties.download_folder.exists():
         properties.download_folder.mkdir(parents=True)
     logging.basicConfig(
-        level=logging.INFO,  # Set the log level
+        level=logging.DEBUG if properties.log_level == 'DEBUG' else logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Log format
         handlers=[
             logging.FileHandler(properties.download_folder / "download.log"),  # Log to a file
@@ -43,9 +44,10 @@ def main():
                                            subject_name=properties.subject_name,
                                            exclude_subjects=properties.exclude_subjects,
                                            device_name=properties.device_name)
-        for u in subjects:
-            logger.info(f"{u}")
 
+        logger.info('Downloading data for subjects:')
+        print(get_subjects_table(subjects))
+        
         resolver = PathsResolver(properties.download_folder / zone)
         downloader = DataDownloader(somnofy, resolver=resolver,
                                     ignore_epoch_for_shorter_than_hours=properties.ignore_epoch_for_shorter_than_hours,

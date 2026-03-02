@@ -3,13 +3,14 @@ import pkg_resources
 
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
+from ambient_bd_downloader.sf_api.dom import get_subjects_table
 from ambient_bd_downloader.storage.paths_resolver import PathsResolver
 from ambient_bd_downloader.download.quality_checker import QualityChecker
 from ambient_bd_downloader.properties.properties import load_application_properties
 
 def quality_report():
     """
-    Generate a report on data quality (accesses data through the API but does not download it)
+    Generate a report on data quality (accesses data through the API but does not save it)
     """
 
     properties = load_application_properties()
@@ -18,7 +19,7 @@ def quality_report():
     if not properties.download_folder.exists():
         properties.download_folder.mkdir(parents=True)
     logging.basicConfig(
-        level=logging.INFO,  # Set the log level
+        level=logging.DEBUG if properties.log_level == 'DEBUG' else logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Log format
         handlers=[
             logging.FileHandler(properties.download_folder / "data_quality.log"),  # Log to a file
@@ -28,6 +29,7 @@ def quality_report():
 
     logger = logging.getLogger('main')
     version = pkg_resources.require("ambient-bd-downloader")[0].version
+    logger.debug('This is a test debug message')
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
     
@@ -56,8 +58,9 @@ def quality_report():
                                            subject_name=properties.subject_name,
                                            exclude_subjects=properties.exclude_subjects,
                                            device_name=properties.device_name)
-        for u in subjects:
-            logger.info(f"{u}")
+
+        logger.info('Processing subjects:')
+        print(get_subjects_table(subjects))
 
         resolver = PathsResolver(properties.download_folder / zone)
         downloader = DataDownloader(somnofy, resolver=resolver, qc=qc)
