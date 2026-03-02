@@ -30,61 +30,56 @@ class DataDownloader:
         self.ignore_epoch_for_shorter_than_hours = ignore_epoch_for_shorter_than_hours
         self._logger = logging.getLogger('DataDownloader')
 
-    def get_subject_identity(self, subject):
-        return subject.identifier
-
     def save_subject_data(self, subject: Subject, start_date=None, force_saved_date: bool = True):
-
-        subject_identity = self.get_subject_identity(subject)
         self._logger.info(f'{subject}')
-        start_date = self.calculate_start_date(subject_identity, start_date, force_saved_date)
-        self._logger.info(f'Downloading data for subject {subject_identity} starting from {start_date}')
+        start_date = self.calculate_start_date(subject.identifier, start_date, force_saved_date)
+        self._logger.info(f'Downloading data for subject {subject.identifier} starting from {start_date}')
         sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date)
 
         if len(sessions) == 0:
-            self._logger.info(f'No sessions found for subject {subject_identity} between {start_date} and now')
-            return None
+            self._logger.info(f'No sessions found for subject {subject.identifier} between {start_date} and now')
+            return
 
-        self._logger.info(f'Found {len(sessions)} sessions for subject {subject_identity} between {start_date} and now')
+        self._logger.info(f'Found {len(sessions)} sessions for subject {subject.identifier} between {start_date} and now')
 
-        reports = pd.DataFrame()
-        epoch_data = pd.DataFrame()
+        reports = []
+        epoch_reports = []
         last_session = None
         last_session_json = None
 
         for s in sessions:
-            if self._is_in_progress(s, subject_identity):
-                continue
-
-            self._logger.info(f'Downloading session {s.session_id} for subject {subject_identity}')
+            self._logger.debug(f'Downloading session {s.session_id} for subject {subject.identifier}')
 
             s_json = self._somnofy.get_session_json(s.session_id)
-            self.save_raw_session_data(s_json, subject_identity, s.session_id)
+            self.save_raw_session_data(s_json, subject.identifier, s.session_id)
 
-            reports = pd.concat([reports, self._make_session_report(s_json)], ignore_index=True)
+            self.append_session_data(reports, s_json)
 
             if self._should_store_epoch_data(s):
-                epoch_data = pd.concat([epoch_data, self.make_epoch_data_frame_from_session(s_json)],
-                                       ignore_index=True)
+                self.append_epoch_data(epoch_reports, s_json)
 
             last_session = s
             last_session_json = s_json
 
-        reports.insert(0, 'participant_id', subject_identity)
-        epoch_data.insert(0, 'participant_id', subject_identity)
+        reports = pd.DataFrame(reports)
+        reports.insert(0, 'participant_id', subject.identifier)
+        if len(epoch_reports) > 0:
+            epoch_data = pd.concat([pd.DataFrame.from_dict(e) for e in epoch_reports], ignore_index=True)
+            epoch_data.insert(0, 'participant_id', subject.identifier)
+            epoch_data.insert(2, 'session_id', epoch_data.pop('session_id'))
+        else:
+            epoch_data = pd.DataFrame()
 
-        if len(sessions) == 0:
-            return
         if not last_session or not last_session.session_end:
             return
         dates = self._report_to_date_range(reports)
 
-        self.save_reports(reports, subject_identity)
-        self.append_to_global_reports(reports, subject_identity)
-        self.save_epoch_data(epoch_data, subject_identity)
+        self.save_reports(reports, subject.identifier)
+        self.append_to_global_reports(reports, subject.identifier)
+        self.save_epoch_data(epoch_data, subject.identifier)
         compliance_info = self._compliance_checker.calculate_compliance(reports, dates)
-        self.save_compliance_info(compliance_info, subject_identity, dates)
-        self.save_last_session(last_session_json, subject_identity)
+        self.save_compliance_info(compliance_info, subject.identifier, dates)
+        self.save_last_session(last_session_json, subject.identifier)
 
     def save_quality_reports(self, subject_list: list[Subject], start_date: str):
         subject_qc = []
@@ -94,6 +89,8 @@ class DataDownloader:
             subject_flags = set()
             sessions = self._somnofy.get_all_sessions_for_subject(sub.id, start_date)
 
+            sessions = [s for s in sessions if not s.data.get('time_asleep') == 0]
+            
             if len(sessions) == 0:
                 self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and now')
                 continue
@@ -106,7 +103,7 @@ class DataDownloader:
 
             for s in sessions:
                 s_json = self._somnofy.get_session_json(s.session_id).get('data')
-                if s_json.get('sleep_period') == 0:
+                if s_json.get('time_asleep') == 0:
                     continue
 
                 if last_session:
@@ -124,6 +121,9 @@ class DataDownloader:
             if len(subject_flags) > 0:
                 subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_flags, sub)
 
+        if len(session_qc) == 0:
+            self._logger.info('No flags were raised! No quality reports to save.')
+            return
         self.save_session_qc(session_qc)
         self.save_subject_qc(subject_qc)
 
@@ -132,11 +132,15 @@ class DataDownloader:
                 (session.duration_seconds and
                  session.duration_seconds >= self.ignore_epoch_for_shorter_than_hours * 60 * 60))
 
-    def _make_session_report(self, s_json: dict) -> pd.DataFrame:
-        json = s_json['data'].copy()
-        json.pop('epoch_data', None)
-        df = pd.DataFrame(pd.json_normalize(json))
-        return df
+    def append_session_data(self, reports: list[dict], s_json: dict) -> list[dict]:
+        session_data = s_json['data'].copy()
+        session_data.pop('epoch_data', None)
+        reports.append(session_data)
+
+    def append_epoch_data(self, epoch_reports: list[dict], s_json: dict) -> list[dict]:
+        e_json = s_json['data']['epoch_data']
+        e_json['session_id'] = s_json['data']['id']
+        epoch_reports.append(e_json)
 
     def _is_in_progress(self, session: Session, subject_id: str) -> bool:
         if session.state == 'IN_PROGRESS':
@@ -196,6 +200,7 @@ class DataDownloader:
         df = (pd.DataFrame(session_qc)
               .sort_values('participant_id')
               )
+        df.insert(1, 'participant_id', df.pop('participant_id'))
         path = self._resolver.get_main_dir() / 'Session_qc.csv'
         df.to_csv(path, index=False)
         self._logger.info(f'Saved Session quality report: {path}')
@@ -226,17 +231,6 @@ class DataDownloader:
 
     def _epoch_data_file(self, subject_id: str) -> Path:
         return self._resolver.get_subject_data_dir(subject_id) / f'{subject_id}_SOM-Epoc_{self._timestamp}.csv'
-
-    def make_epoch_data_frame_from_session(self, session_json: dict) -> pd.DataFrame:
-        epoch_data = pd.DataFrame(session_json['data']['epoch_data'])
-        session_data = epoch_data
-
-        # add session_id as first column
-        session_data.insert(0, 'session_id', session_json['data']['id'])
-
-        # change the order of columns that first is 'timestamp' and then rest remains same
-        session_data = session_data[['timestamp'] + [col for col in session_data.columns if col != 'timestamp']]
-        return session_data
 
     def append_to_global_reports(self, reports: pd.DataFrame, subject_id: str):
         file = self._resolver.get_subject_global_report(subject_id)

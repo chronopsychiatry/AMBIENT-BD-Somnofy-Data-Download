@@ -40,12 +40,16 @@ class QualityChecker:
         """
         metrics = dict()
 
+        sleep_onset_latency = session_json.get('sleep_onset_latency') if session_json.get('sleep_onset_latency') is not None else 0
+
         metrics['id'] = session_json.get('id')
+        metrics['session_start'] = session_json.get('session_start')
         metrics['distance'] = session_json.get('distance_during_sleep_mean')
         metrics['signal_quality'] = session_json.get('epoch_data').get('signal_quality_mean')
         metrics['signal_quality_mean'] = np.mean(metrics['signal_quality'])
         metrics['frac_no_presence'] = session_json.get('time_in_no_presence') / session_json.get('time_in_bed')
         metrics['frac_awake'] = (session_json.get('time_in_bed') - session_json.get('time_asleep')) / session_json.get('time_in_bed')
+        metrics['sleep_onset_latency'] = datetime.timedelta(seconds=sleep_onset_latency)
 
         return metrics
         
@@ -73,6 +77,9 @@ class QualityChecker:
 
         if metrics['frac_awake'] > self.max_fraction_awake:
             flags.append("fraction_awake")
+
+        if metrics['sleep_onset_latency'] < datetime.timedelta(minutes=1):
+            flags.append("started_asleep")
 
         if n_split > self.max_split_sessions:
             flags.append("split_sessions")
