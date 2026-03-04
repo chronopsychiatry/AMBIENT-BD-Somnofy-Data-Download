@@ -34,7 +34,6 @@ class MockSomnofy(Somnofy):
 
     def get_session_json(self, session_id):
         session = self._read_test_session_json()
-        # session['id'] = session_id
         return session
 
 
@@ -55,7 +54,6 @@ class TestDataDownloader():
                            'device': 'VTFAKE',
                            'created_at': '2023-01-01T00:00:00'
                            })
-        subject_identity = self.data_downloader.get_subject_identity(subject)
 
         self.data_downloader.save_subject_data(subject, start_date=datetime.datetime.now() - datetime.timedelta(days=1))
 
@@ -65,24 +63,40 @@ class TestDataDownloader():
         dates = self.data_downloader._sessions_to_date_range(session, session)
 
         # check if raw data was saved
-        raw_data_file = self.data_downloader._raw_session_file(s_json, subject_identity, session_id)
+        raw_data_file = self.data_downloader._raw_session_file(s_json, subject.identifier, session_id)
         assert os.path.isfile(raw_data_file)
 
         # check if epoch data was saved
-        epoch_data_file = self.data_downloader._epoch_data_file(subject_identity)
+        epoch_data_file = self.data_downloader._epoch_data_file(subject.identifier)
         assert os.path.isfile(epoch_data_file)
 
         # check if reports were saved
-        reports_file = self.data_downloader._reports_file(subject_identity)
+        reports_file = self.data_downloader._reports_file(subject.identifier)
         assert os.path.isfile(reports_file)
 
         # check if last session was saved
-        last_session_file = self.mock_resolver.get_subject_last_session(subject_identity)
+        last_session_file = self.mock_resolver.get_subject_last_session(subject.identifier)
         assert os.path.isfile(last_session_file)
 
         # check if compliance data was saved
-        compliance_file = self.data_downloader._compliance_file(subject_identity, dates)
+        compliance_file = self.data_downloader._compliance_file(subject.identifier, dates)
         assert os.path.isfile(compliance_file)
+
+    def test_save_quality_reports(self):
+        subject_list = [Subject({'id': '1',
+                                 'identifier': 'subject1',
+                                 'device': 'VTFAKE',
+                                 'created_at': '2023-01-01T00:00:00'
+                                 })]
+        start_date = datetime.datetime.fromisoformat("2024-12-24")
+        end_date = datetime.datetime.today()
+        self.data_downloader.save_quality_reports(subject_list, start_date)
+
+        subject_qc = self.mock_resolver.get_subject_qc(start_date, end_date)
+        assert subject_qc.exists()
+        
+        session_qc = self.mock_resolver.get_session_qc(start_date, end_date)
+        assert session_qc.exists()
 
     def test_session_to_date_range(self):
         s_json = self.mock_somnofy._read_test_session_json()

@@ -99,7 +99,6 @@ class DataDownloader:
 
             last_session = None
             n_flags = 0
-            n_split = 0
 
             for s in sessions:
                 s_json = self._somnofy.get_session_json(s.session_id).get('data')
