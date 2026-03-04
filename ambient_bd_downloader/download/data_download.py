@@ -106,10 +106,8 @@ class DataDownloader:
                 if s_json.get('time_asleep') == 0:
                     continue
 
-                if last_session:
-                    n_split += self.qc.is_split_session(s_json, last_session)
-                metrics = self.qc.get_metrics(s_json)
-                flags = self.qc.get_flags(metrics, n_split)
+                metrics = self.qc.get_metrics(s_json, last_session)
+                flags = self.qc.get_flags(metrics)
 
                 if len(flags) > 0:
                     n_flags += 1
@@ -124,8 +122,8 @@ class DataDownloader:
         if len(session_qc) == 0:
             self._logger.info('No flags were raised! No quality reports to save.')
             return
-        self.save_session_qc(session_qc)
-        self.save_subject_qc(subject_qc)
+        self.save_session_qc(session_qc, start_date)
+        self.save_subject_qc(subject_qc, start_date)
 
     def _should_store_epoch_data(self, session: Session) -> bool:
         return (not self.ignore_epoch_for_shorter_than_hours or
@@ -196,20 +194,22 @@ class DataDownloader:
         path = self._reports_file(subject_id)
         reports.to_csv(path, index=False)
 
-    def save_session_qc(self, session_qc: list[dict]):
+    def save_session_qc(self, session_qc: list[dict], start_date: str):
         df = (pd.DataFrame(session_qc)
               .sort_values('participant_id')
               )
         df.insert(1, 'participant_id', df.pop('participant_id'))
-        path = self._resolver.get_main_dir() / 'Session_qc.csv'
+        end_date = datetime.datetime.today()
+        path = self._resolver.get_session_qc(start_date, end_date)
         df.to_csv(path, index=False)
         self._logger.info(f'Saved Session quality report: {path}')
 
-    def save_subject_qc(self, subject_qc: list[dict]):
+    def save_subject_qc(self, subject_qc: list[dict], start_date: str):
         df = (pd.DataFrame(subject_qc)
               .sort_values('fraction_flagged', ascending=False)
               )
-        path = self._resolver.get_main_dir() / "Participant_qc.csv"
+        end_date = datetime.datetime.today()
+        path = self._resolver.get_subject_qc(start_date, end_date)
         df.to_csv(path, index=False)
         self._logger.info(f'Saved Subject quality report: {path}')
 

@@ -9,12 +9,11 @@ zone=ABD Pilot
 device=*
 subject=*
 exclude-subjects=*
-log-level='INFO'
-            
-[DOWNLOAD]
 # Filtering
 ignore-epoch-for-shorter-than-hours=2
 flag-nights-with-sleep-under-hours=5
+# Log level
+log-level='INFO'
 
 [QUALITY_REPORT]
 min-distance=0.4

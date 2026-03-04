@@ -55,3 +55,13 @@ class PathsResolver:
 
     def get_subject_global_report(self, subject_id: str) -> Path:
         return self.get_subject_data_dir(subject_id) / 'all_sessions_report.csv'
+
+    def get_session_qc(self, from_date: str, to_date: str) -> Path:
+        from_date = from_date.strftime('%Y-%m-%d')
+        to_date = to_date.strftime('%Y-%m-%d')
+        return self._main_dir / f"Session_qc_{from_date}-{to_date}.csv"
+
+    def get_subject_qc(self, from_date: str, to_date: str) -> Path:
+        from_date = from_date.strftime('%Y-%m-%d')
+        to_date = to_date.strftime('%Y-%m-%d')
+        return self._main_dir / f"Participant_qc_{from_date}-{to_date}.csv"

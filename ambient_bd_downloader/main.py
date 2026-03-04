@@ -1,6 +1,6 @@
 import logging
-import pkg_resources
 
+import ambient_bd_downloader
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
 from ambient_bd_downloader.sf_api.dom import get_subjects_table
@@ -9,7 +9,7 @@ from ambient_bd_downloader.properties.properties import load_application_propert
 
 
 def main():
-    properties = load_application_properties()
+    properties = load_application_properties(output_type='download')
 
     # Configure the logger
     if not properties.download_folder.exists():
@@ -24,7 +24,7 @@ def main():
     )
 
     logger = logging.getLogger('main')
-    version = pkg_resources.require("ambient-bd-downloader")[0].version
+    version = ambient_bd_downloader.__version__
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
 
