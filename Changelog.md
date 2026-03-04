@@ -1,3 +1,13 @@
+# 0.7.0 (04/03/2026)
+
+- Added a new command `ambient_quality_report` that can be used to produce reports on data quality for a given timeframe
+  - To use this, generate a new config with `ambient_generate_config`
+  - The new config will contain a [QUALITY_REPORT] section with user-defined thresholds
+  - The [DEFAULT] config will still be used to connect to the Somnofy API
+  - Two files will be generated:
+	- "Session_qc": one row per session that did not match the user thresholds (= "flagged session")
+	- "Subject_qc": one row per subject who has > 1 flagged session
+
 # 0.6.1 (24/02/2026)
 
 - Added a config option "exclude-subjects" to exclude certain subjects from the download based on their identifier (e.g. `exclude-subjects=Test` will exclude all subjects that have "Test" in their identifier)

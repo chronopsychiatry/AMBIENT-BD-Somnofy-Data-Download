@@ -101,6 +101,42 @@ To download the data, navigate to the folder that contains the `ambient_download
 ambient_download
 ```
 
+### Quality report
+
+To generate quality reports on the data, navigate to the folder that contains `ambient_downloader.properties` and run:
+
+```bash
+ambient_quality_report
+```
+
+The quality reports use user-defined thresholds to flag sessions that might be of poor quality. These thresholds can be adjusted in the config file, under the [QUALITY_REPORT] section (if you do not have this section in your config file, you can get it by generating a fresh config file).
+
+#### Quality Reports configuration
+
+##### min-distance
+
+The minimum average distance from the sensor over the session.
+
+##### max-distance
+
+The maximum average distance from the sensor over the session.
+
+##### min-signal-quality
+
+The minimum signal quality over the session (calculated from epoch data). A session will be flagged if > 80% of the epoch timepoints are below this threshold.
+
+##### max-fraction-no-presence
+
+The maximum fraction of "no presence" state during a session.
+
+##### max-fraction-awake
+
+The maximum fraction of "awake" state during a session.
+
+##### min-session-separation
+
+Minimum time interval (in minutes) between the end of a session and the start of the next. Any sessions separated by less than this threshold will be flagged as "split sessions" (the flag is applied only on the second session).
+
 ## General behaviour
 
 In the typical use, the program is run periodically (by a researcher or automatically) to download the data from the Somnofy server. The program remembers the last downloaded session for each subject and continues the download from there. For each run a new set of output files is generated and marked with the date range of the download (last_session date to current date).
@@ -122,13 +158,15 @@ The log file is stored in the download directory as `download.log`.
 
 ## Data layout and format
 
-Example folder structure for 2 subjects (U03, U04) in zone "ABD Test" and 2 download program runs
+Example folder structure for 2 subjects (ABD001, ABD002) in zone "ABD Test Zone" after 2 download program runs, and one quality control run.
 on 2024-07-26 and 2024-08-03. There were no data for subject U03 after 26th July.
 
 ```default
 - downloaded_data
-    - ABD Test
-        - U03-66744b82056bcf001afa8d69
+    - Session_qc_2024-07-14_2024-07-26.csv
+	- Participant_qc_2024-07-14_2024-07-26.csv
+    - ABD Test Zone
+        - ABD001
             - data
                 - 2024-07-14_2024-07-26_epoch_data.csv
                 - 2024-07-14_2024-07-26_session_report.csv
@@ -139,7 +177,7 @@ on 2024-07-26 and 2024-08-03. There were no data for subject U03 after 26th July
                 - ...
             - sys
                 - last_session.json
-        - U04-66826ea1056bcf001afdfca1
+        - ABD002
             - data
                 - 2024-07-14_2024-07-26_epoch_data.csv
                 - 2024-07-14_2024-07-26_session_report.csv
@@ -155,7 +193,7 @@ on 2024-07-26 and 2024-08-03. There were no data for subject U03 after 26th July
 
 ```
 
-For each subject a folder is created in the download folder. The folder name is a combination of the subject identifier and subject ID. For example, if a subject has identifier `abd1234` and ID `sub_01J9VDRPY3PAJ12K1N3C4M3JMF`, the folder name would be `abd1234-sub_01J9VDRPY3PAJ12K1N3C4M3JMF`. Inside the subject folder, there are three subfolders: `data`, `raw` and `sys`.
+For each subject a folder is created in the download folder. Inside the subject folder, there are three subfolders: `data`, `raw` and `sys`.
 
 The `sys` folder contains the information used by the program to track the download status. For example it stores the last finished session which has been downloaded. This information is used when download is restarted to continue from the last session.
 
@@ -167,14 +205,6 @@ Whenever the download is started, the date range is established as START_DATE_OF
 
 For example if in the previous run the last downloaded session terminates on 2024-07-14 at 9:30, we run download in the afternoon of the 2024-07-26
 the program will use as the date range: `2024-07-14_2024-07-26` (if there was a session on the 26th July).
-
-The date-range is used to name the following files:
-
-```default
-- 2024-07-14_2024-07-26_epoch_data.csv - with the epoch data within the date range
-- 2024-07-14_2024-07-26_session_report.csv - with the list of sessions and their characteristics in the date range
-- 2024-07-14_2024-07-26_compliance_info.csv - with the information on the validy of each night in the date range 
-```
 
 Additionally, the file `all_sessions_report.csv` contains characteristics of all the sessions ever downloaded by the program, which can be used to find sessions for any day within the study.
 
