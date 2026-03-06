@@ -1,3 +1,7 @@
+# 0.7.1 (06/03/2026)
+
+- Fixed a bug that caused an empty folder to be created in the parent directory of the config file (and could crash the script if the parent directory was not writable)
+
 # 0.7.0 (04/03/2026)
 
 - Added a new command `ambient_quality_report` that can be used to produce reports on data quality for a given timeframe
