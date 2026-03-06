@@ -14,18 +14,18 @@ from ambient_bd_downloader.sf_api.somnofy import Somnofy
 class DataDownloader:
     def __init__(self,
                  somnofy: Somnofy,
-                 resolver: PathsResolver = PathsResolver(),
-                 qc: QualityChecker = QualityChecker(),
-                 compliance=ComplianceChecker(),
+                 resolver: PathsResolver,
+                 qc: QualityChecker = None,
+                 compliance: ComplianceChecker = None,
                  ignore_epoch_for_shorter_than_hours=2,
                  filter_shorter_than_hours=5):
         if not somnofy:
             raise ValueError('Somnofy connection must be provided')
         self._somnofy = somnofy
         self._resolver = resolver
-        self.qc = qc
+        self.qc = qc or QualityChecker()
         self._timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
-        self._compliance_checker = compliance
+        self._compliance_checker = compliance or ComplianceChecker()
         self._compliance_checker.flag_shorter_than_hours = filter_shorter_than_hours
         self.ignore_epoch_for_shorter_than_hours = ignore_epoch_for_shorter_than_hours
         self._logger = logging.getLogger('DataDownloader')
