@@ -36,8 +36,6 @@ class QualityChecker:
         """
         metrics = dict()
 
-        sleep_onset_latency = session_json.get('sleep_onset_latency', 0) or 0
-
         metrics['id'] = session_json.get('id')
         metrics['session_start'] = session_json.get('session_start')
         metrics['session_end'] = session_json.get('session_end')
@@ -45,8 +43,11 @@ class QualityChecker:
         metrics['signal_quality'] = session_json.get('epoch_data').get('signal_quality_mean')
         metrics['signal_quality_mean'] = np.mean(metrics['signal_quality'])
         metrics['frac_no_presence'] = session_json.get('time_in_no_presence') / session_json.get('time_in_bed')
-        metrics['frac_awake'] = (session_json.get('time_in_bed') - session_json.get('time_asleep')) / session_json.get('time_in_bed')
-        metrics['sleep_onset_latency'] = datetime.timedelta(seconds=sleep_onset_latency)
+        metrics['frac_awake'] = session_json.get('time_wake_after_sleep_onset') / session_json.get('sleep_period')
+        metrics['sleep_onset_latency'] = (
+            datetime.datetime.fromisoformat(session_json.get('time_at_sleep_onset')) -
+            datetime.datetime.fromisoformat(session_json.get('session_start'))
+        )
 
         if last_session:
             metrics['time_to_previous_session'] = self.get_session_separation(session_json, last_session)
@@ -139,7 +140,13 @@ class QualityChecker:
 
         return session_qc
 
-    def update_subject_qc(self, subject_qc: list[dict], subject_flags: set, n_sessions: int, n_sessions_flagged: int, subject: Subject) -> list[dict]:
+    def update_subject_qc(self,
+        subject_qc: list[dict],
+        subject_flags: set,
+        n_sessions: int,
+        n_sessions_flagged: int,
+        n_short_sessions: int,
+        subject: Subject) -> list[dict]:
         """
         Update the subjects quality control DataFrame with data for the current subject
 
@@ -148,6 +155,7 @@ class QualityChecker:
         subject_flags (set): all flags raised for the subject
         n_sessions (int): the total number of sessions for the subject
         n_sessions_flagged (int): the number of sessions that were flagged for this subject
+        n_short_sessions (int): the number of short sessions (< 2h) for this subject
         subject (Subject): the current subject
 
         Returns:
@@ -155,6 +163,7 @@ class QualityChecker:
         """
         new_row = dict()
         new_row['participant_id'] = subject.identifier
+        new_row['n_short_sessions'] = n_short_sessions
         new_row['n_sessions_flagged'] = n_sessions_flagged
         new_row['total_sessions'] = n_sessions
         new_row['fraction_flagged'] = round(n_sessions_flagged / n_sessions, 2)

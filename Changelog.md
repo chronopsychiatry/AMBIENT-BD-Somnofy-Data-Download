@@ -1,6 +1,9 @@
 # 0.7.2 (in development)
 
 - Allow setting a `to-date` parameter in config to download or run quality-control on a specific range of dates
+- Quality Control
+  - Calculate fraction_awake from sleep onset to wakeup (instead of session start to session end)
+  - Ignore short sessions (< 2h). Short sessions are not flagged, but a count will be given in Participant_qc
 
 # 0.7.1 (06/03/2026)
 

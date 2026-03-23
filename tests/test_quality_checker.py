@@ -77,16 +77,17 @@ class TestQualityChecker():
         subject_qc = []
         subject_flags = set(['distance', 'split_session'])
         n_sessions = 4
+        n_short = 1
         n_sessions_flagged = 2
         subject = Subject({'id': '1',
                            'identifier': 'subject1',
                            'device': 'VTFAKE',
                            'created_at': '2023-01-01T00:00:00'
                            })
-        subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, n_sessions, n_sessions_flagged, subject)
+        subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, n_sessions, n_sessions_flagged, n_short, subject)
         assert len(subject_qc) == 1
         assert subject_qc[0]['fraction_flagged'] == 0.5
 
-        subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, n_sessions, n_sessions_flagged, subject)
+        subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, n_sessions, n_sessions_flagged, n_short, subject)
         assert len(subject_qc) == 2
         assert subject_qc[0] == subject_qc[1]

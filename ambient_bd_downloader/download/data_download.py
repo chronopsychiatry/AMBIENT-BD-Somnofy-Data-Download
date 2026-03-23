@@ -97,6 +97,7 @@ class DataDownloader:
             sessions = self._somnofy.get_all_sessions_for_subject(sub.id, start_date, end_date)
 
             sessions = [s for s in sessions if not s.data.get('time_asleep') == 0]
+            long_sessions = [s for s in sessions if s.data.get('sleep_period') > 7200]
             
             if len(sessions) == 0:
                 self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and {end_date}')
@@ -106,11 +107,10 @@ class DataDownloader:
 
             last_session = None
             n_flags = 0
+            n_short = len(sessions) - len(long_sessions)
 
-            for s in sessions:
+            for s in long_sessions:
                 s_json = self._somnofy.get_session_json(s.session_id).get('data')
-                if s_json.get('time_asleep') == 0:
-                    continue
 
                 metrics = self.qc.get_metrics(s_json, last_session)
                 flags = self.qc.get_flags(metrics)
@@ -123,13 +123,13 @@ class DataDownloader:
                 last_session = s_json
 
             if len(subject_flags) > 0:
-                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_flags, sub)
+                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_flags, n_short, sub)
 
         if len(session_qc) == 0:
             self._logger.info('No flags were raised! No quality reports to save.')
             return
-        self.save_session_qc(session_qc, start_date)
-        self.save_subject_qc(subject_qc, start_date)
+        self.save_session_qc(session_qc, start_date, end_date)
+        self.save_subject_qc(subject_qc, start_date, end_date)
 
     def _should_store_epoch_data(self, session: Session) -> bool:
         return (not self.ignore_epoch_for_shorter_than_hours or
@@ -200,21 +200,19 @@ class DataDownloader:
         path = self._reports_file(subject_id)
         reports.to_csv(path, index=False)
 
-    def save_session_qc(self, session_qc: list[dict], start_date: str):
+    def save_session_qc(self, session_qc: list[dict], start_date: str, end_date: str):
         df = (pd.DataFrame(session_qc)
               .sort_values('participant_id')
               )
         df.insert(1, 'participant_id', df.pop('participant_id'))
-        end_date = datetime.datetime.today()
         path = self._resolver.get_session_qc(start_date, end_date)
         df.to_csv(path, index=False)
         self._logger.info(f'Saved Session quality report: {path}')
 
-    def save_subject_qc(self, subject_qc: list[dict], start_date: str):
+    def save_subject_qc(self, subject_qc: list[dict], start_date: str, end_date: str):
         df = (pd.DataFrame(subject_qc)
               .sort_values('fraction_flagged', ascending=False)
               )
-        end_date = datetime.datetime.today()
         path = self._resolver.get_subject_qc(start_date, end_date)
         df.to_csv(path, index=False)
         self._logger.info(f'Saved Subject quality report: {path}')

@@ -90,7 +90,7 @@ class TestDataDownloader():
                                  })]
         start_date = datetime.datetime.fromisoformat("2024-12-24")
         end_date = datetime.datetime.today()
-        self.data_downloader.save_quality_reports(subject_list, start_date)
+        self.data_downloader.save_quality_reports(subject_list, start_date, end_date)
 
         subject_qc = self.mock_resolver.get_subject_qc(start_date, end_date)
         assert subject_qc.exists()
