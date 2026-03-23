@@ -1,4 +1,9 @@
-# 0.7.2 (in development)
+# 0.7.3 (23/03/2026)
+
+- Remove an unused field in the config created from `ambient_generate_config`
+- Allow setting to-date to * to download up to the current date
+
+# 0.7.2 (23/03/2026)
 
 - Allow setting a `to-date` parameter in config to download or run quality-control on a specific range of dates
 - Quality Control

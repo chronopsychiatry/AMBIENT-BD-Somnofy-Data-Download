@@ -23,7 +23,6 @@ min-signal-quality=4
 max-fraction-no-presence=0.2
 max-fraction-awake=0.3
 min-session-separation=15
-max-split-sessions=2
 """
 
 def generate_config():

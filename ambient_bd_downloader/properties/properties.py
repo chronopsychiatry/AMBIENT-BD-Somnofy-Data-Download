@@ -37,6 +37,8 @@ class Properties():
             from_date = datetime.datetime.fromisoformat(from_date)
         self.from_date = from_date
         to_date = to_date or datetime.datetime.now()
+        if to_date == '*':
+            to_date = datetime.datetime.now()
         if isinstance(to_date, str):
             to_date = datetime.datetime.fromisoformat(to_date)
         check_dates(from_date, to_date)

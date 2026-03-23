@@ -70,7 +70,7 @@ The program remembers the last downloaded session (for each study subject) and c
 
 Date until which to download data, in ISO format `YYYY-MM-DD`.
 
-Remove the field from the config to download data up to the current date.
+`to-date=*` will download data up to the current date.
 
 ##### zone
 
