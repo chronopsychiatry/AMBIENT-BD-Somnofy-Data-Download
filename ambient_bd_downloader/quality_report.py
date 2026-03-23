@@ -1,6 +1,6 @@
 import logging
+from importlib.metadata import version as _version
 
-import ambient_bd_downloader
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
 from ambient_bd_downloader.sf_api.dom import get_subjects_table
@@ -28,7 +28,7 @@ def quality_report():
     )
 
     logger = logging.getLogger('main')
-    version = ambient_bd_downloader.__version__
+    version = _version('ambient_bd_downloader')
     logger.debug('This is a test debug message')
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
@@ -64,4 +64,4 @@ def quality_report():
         resolver = PathsResolver(properties.download_folder / zone)
         downloader = DataDownloader(somnofy, resolver=resolver, qc=qc)
 
-        downloader.save_quality_reports(subjects, properties.from_date)
+        downloader.save_quality_reports(subjects, properties.from_date, properties.to_date)

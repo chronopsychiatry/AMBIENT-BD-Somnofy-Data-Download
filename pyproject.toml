@@ -1,12 +1,10 @@
 [build-system]
-requires = [
-	 "setuptools"
-]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ambient_bd_downloader"
-version = "0.7.1"
+version = "0.7.2"
 description = "Download data from Somnofy devices"
 readme = { content-type = "text/markdown", file = "README.md" }
 requires-python = ">=3.10"
@@ -21,9 +19,10 @@ dependencies = [
 Homepage = 'https://github.com/chronopsychiatry/AMBIENT-BD-Somnofy-Data-Download'
 
 [project.scripts]
-ambient_download = 'ambient_bd_downloader:main.main'
-ambient_generate_config = 'ambient_bd_downloader:generate_config.generate_config'
-ambient_quality_report = 'ambient_bd_downloader:quality_report.quality_report'
+ambient_download = 'ambient_bd_downloader.main:main'
+ambient_generate_config = 'ambient_bd_downloader.generate_config:generate_config'
+ambient_quality_report = 'ambient_bd_downloader.quality_report:quality_report'
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["ambient_bd_downloader*"]

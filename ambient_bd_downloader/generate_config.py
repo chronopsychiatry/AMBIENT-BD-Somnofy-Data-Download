@@ -5,6 +5,7 @@ client-id-file=.\\client_id.txt
 download-dir=.\\downloaded_data
 # Data scope
 from-date=2021-01-01
+to-date=*
 zone=ABD Pilot
 device=*
 subject=*

@@ -1,6 +1,6 @@
 import logging
+from importlib.metadata import version as _version
 
-import ambient_bd_downloader
 from ambient_bd_downloader.download.data_download import DataDownloader
 from ambient_bd_downloader.sf_api.somnofy import Somnofy
 from ambient_bd_downloader.sf_api.dom import get_subjects_table
@@ -24,7 +24,7 @@ def main():
     )
 
     logger = logging.getLogger('main')
-    version = ambient_bd_downloader.__version__
+    version = _version('ambient_bd_downloader')
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
 
@@ -54,7 +54,7 @@ def main():
                                     filter_shorter_than_hours=properties.flag_nights_with_sleep_under_hours)
 
         for u in subjects:
-            downloader.save_subject_data(u, properties.from_date)
+            downloader.save_subject_data(u, properties.from_date, properties.to_date)
 
 
 if __name__ == '__main__':

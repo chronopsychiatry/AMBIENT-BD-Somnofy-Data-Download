@@ -30,17 +30,21 @@ class DataDownloader:
         self.ignore_epoch_for_shorter_than_hours = ignore_epoch_for_shorter_than_hours
         self._logger = logging.getLogger('DataDownloader')
 
-    def save_subject_data(self, subject: Subject, start_date=None, force_saved_date: bool = True):
+    def save_subject_data(self,
+                          subject: Subject,
+                          start_date: str | datetime.date = None,
+                          end_date: str | datetime.date = None,
+                          force_saved_date: bool = True):
         self._logger.info(f'{subject}')
         start_date = self.calculate_start_date(subject.identifier, start_date, force_saved_date)
         self._logger.info(f'Downloading data for subject {subject.identifier} starting from {start_date}')
-        sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date)
+        sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date, end_date)
 
         if len(sessions) == 0:
-            self._logger.info(f'No sessions found for subject {subject.identifier} between {start_date} and now')
+            self._logger.info(f'No sessions found for subject {subject.identifier} between {start_date} and {end_date}')
             return
 
-        self._logger.info(f'Found {len(sessions)} sessions for subject {subject.identifier} between {start_date} and now')
+        self._logger.info(f'Found {len(sessions)} sessions for subject {subject.identifier} between {start_date} and {end_date}')
 
         reports = []
         epoch_reports = []
@@ -81,21 +85,24 @@ class DataDownloader:
         self.save_compliance_info(compliance_info, subject.identifier, dates)
         self.save_last_session(last_session_json, subject.identifier)
 
-    def save_quality_reports(self, subject_list: list[Subject], start_date: str):
+    def save_quality_reports(self,
+                             subject_list: list[Subject],
+                             start_date: str | datetime.date = None,
+                             end_date: str | datetime.date = None):
         subject_qc = []
         session_qc = []
         
         for sub in subject_list:
             subject_flags = set()
-            sessions = self._somnofy.get_all_sessions_for_subject(sub.id, start_date)
+            sessions = self._somnofy.get_all_sessions_for_subject(sub.id, start_date, end_date)
 
             sessions = [s for s in sessions if not s.data.get('time_asleep') == 0]
             
             if len(sessions) == 0:
-                self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and now')
+                self._logger.info(f'No sessions found for subject {sub.identifier} between {start_date} and {end_date}')
                 continue
             else:
-                self._logger.info(f'Running quality report for subject {sub.identifier} between {start_date} and now ({len(sessions)} sessions)')
+                self._logger.info(f'Running quality report for subject {sub.identifier} between {start_date} and {end_date} ({len(sessions)} sessions)')
 
             last_session = None
             n_flags = 0

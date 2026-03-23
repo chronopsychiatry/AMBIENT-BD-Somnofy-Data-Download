@@ -1,3 +1,7 @@
+# 0.7.2 (in development)
+
+- Allow setting a `to-date` parameter in config to download or run quality-control on a specific range of dates
+
 # 0.7.1 (06/03/2026)
 
 - Fixed a bug that caused an empty folder to be created in the parent directory of the config file (and could crash the script if the parent directory was not writable)
