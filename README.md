@@ -42,6 +42,8 @@ This will create a file `ambient_downloader.properties` in the current directory
 
 Open the properties file with a text editor to change the parameters (description below).
 
+Parameters under the [DEFAULT] heading will be taken into account for both data download, and quality control. Parameters under [QUALITY_CONTROL] will only be used when running quality control.
+
 #### Files and directories
 
 ##### client-id-file
@@ -52,7 +54,7 @@ Default value: `./client_id.txt`
 
 ##### download-dir
 
-Folder in which the data will be downloaded
+Folder in which the data will be downloaded.
 
 Default value: `./downloaded_data`
 
@@ -62,7 +64,13 @@ Default value: `./downloaded_data`
 
 The date from which to download data, in ISO format `YYYY-MM-DD`.
 
-The program remembers the last downloaded session (for each study subject ) and continues download from there. Check below for more details on how to force the download of all sessions.
+The program remembers the last downloaded session (for each study subject) and continues download from there. Check below for more details on how to force the download of all sessions.
+
+##### to-date
+
+Date until which to download data, in ISO format `YYYY-MM-DD`.
+
+Remove the field from the config to download data up to the current date.
 
 ##### zone
 
@@ -261,74 +269,74 @@ The session report file contains rows for ALL session within the download date r
 
 Apart from housekeeping information about the session (id, session_start, session_end), it contains the information about the sleep and activity.
 
-| Column Name                                               | Description                                                            |
-|-----------------------------------------------------------|------------------------------------------------------------------------|
-| `id`                                                      | The somnofy unique identifier for the session.                         |
-| `state`                                                   | Indicates if the session is ENDED or IN-PROGRESS                       |
-| `subject_id`                                              | The unique ID of the subject associated with this session.             |
-| `device_serial_number`                                    | Serial number of the Somnofy device which recorded the session.        |
-| `epoch_count`                                             | The number of 30s epochs in the session.                               |
-| `session_start`                                           | The timestamp for start of the session.                                |
-| `relative_session_start`                                  | @TODO check somnofy                                                    |
-| `session_end`                                             | The timestamp for end of the session.                                  |
-| `time_at_last_epoch`                                      | The timestamp  the last epoch of the session.                          |
-| `time_at_intended_sleep`                                  | The time of sleep attempt.                                             |
-| `time_at_intended_wakeup`                                 | @TODO CHECK SOMNOFY                                                    |
-| `time_in_undefined`                                       | The time spent in undefined (sleep) stage.                             |
-| `time_at_sleep_onset`                                     | The fall asleep time.                                                  |
-| `time_at_wakeup`                                          | The wakeup time.                                                       |
-| `time_at_midsleep`                                        | Time at the mid-point between sleep onset and wakeup.                  |
-| `sleep_onset_latency`                                     | The time it took to fall asleep in seconds.                            |
-| `sleep_period`                                            | The duration of the sleep session [s].                                 |
-| `time_in_bed`                                             | The total time spent in bed [s].                                       |
-| `time_asleep`                                             | The total time scored as asleep in the session [s].                    |
-| `sleep_efficiency`                                        | The efficiency of sleep.                                               |
-| `time_in_light_sleep`                                     | The time spent in light sleep [s].                                     |
-| `time_in_rem_sleep`                                       | The time spent in REM sleep [s].                                       |
-| `time_in_deep_sleep`                                      | The time spent in deep sleep [s].                                      |
-| `time_in_no_presence`                                     | The time spent with no presence detected [s]                           |
-| `number_of_times_no_presence`                             | The number of times no presence was detected.                          |
-| `time_wake_after_sleep_onset`                             | The time spent awake after sleep onset.                                |
-| `number_of_times_awake`                                   | The number of times the subject woke up.                               |
-| `number_of_times_awake_long`                              | The number of times the subject woke up for a long duration.           |
-| `time_wake_pre_post_sleep`                                | The time spent awake before and after sleep.                           |
-| `time_from_sleep_onset_to_first_rem`                      | The period of REM sleep onset.                                         |
-| `movement_fast_during_sleep_period_mean`                  | The mean movement during sleep.                                        |
-| `rpm_non_rem_filtered_mean`                               | The mean RPM (respirations per minute) during non-REM sleep.           |
-| `rpm_non_rem_mean_var`                                    | Variance of the RPM during non-REM sleep.                              |
-| `rpm_non_rem_baseline`                                    | Baseline of the RPM during non-REM sleep.                              |
-| `rpm_non_rem_baseline_std`                                | Standard deviation of the baseline of the RPM during non-REM sleep.    |
-| `heart_rate_non_rem_filtered_mean`                        | The mean heart rate during non-REM sleep.                              |
-| `heart_rate_non_rem_mean`                                 | The non-filtered mean heart rate during non-REM sleep.                 |
-| `external_heart_rate_non_rem_filtered_mean`               | The mean external heart rate during non-REM sleep.                     |
-| `epochs_with_movement_pct`                                | The percentage of epochs with movement.                                |
-| `epochs_with_movement_during_time_in_bed_pct`             | The percentage of epochs with movement while in bed.                   |
-| `time_with_movement_pct`                                  | The percentage of time with movement.                                  |
-| `time_with_movement_during_time_in_bed_pct`               | The percentage of time in bed with movement.                           |
-| `sleep_cycle_count`                                       | Number of sleep cycles in the session.                                 |
-| `is_workday`                                              | Whether the session was on a work day                                  |
-| `chronotype`                                              | The chronotype for this session, i.e. the time at mid-sleep, in hours. |
-| `social_jet_lag`                                          | @TODO: CHECK SOMNOFY                                                   |
-| `jet_lag`                                                 | @TODO: CHECK SOMNOFY                                                   |
-| `regularity`                                              | @TODO: CHECK SOMNOFY                                                   |
-| `sleep_score_standard`                                    | The sleep score based on the standard scoring method.                  |
-| `sleep_fragmentation`                                     | @TODO: CHECK SOMNOFY                                                   |
-| `external_spo2_mean`                                      | The mean external SpO2 level.                                          |
-| `external_spo2_min`                                       | The minimum external SpO2 level.                                       |
-| `distance_during_sleep_mean`                              | Mean distance from the sensor during sleep.                            |
-| `distance_during_sleep_std`                               | Standard deviation of the distance from sensor during sleep.           |
-| `air_pressure_filtered_mean`                              | The filtered mean air pressure.                                        |
-| `light_ambient_filtered_mean`                             | The filtered mean ambient light level.                                 |
-| `light_ambient_at_wakeup_mean`                            | The mean ambient light level at wake-up time.                          |
-| `sound_amplitude_filtered_mean`                           | The filtered mean sound amplitude.                                     |
-| `sound_amplitude_during_sleep_filtered_for_noise_mean`    | The mean sound amplitude during sleep, filtered for noise.             |
-| `sound_amplitude_during_sleep_filtered_for_movement_mean` | The mean sound amplitude during sleep, filtered for movement.          |
-| `sound_amplitude_at_wake_up`                              | The sound amplitude at wake-up time.                                   |
-| `epochs_with_sound_spikes_during_sleep_count`             | Number of epochs that had sound spikes during sleep.                   |
-| `awakenings_caused_by_sound_count`                        | Number of awakenings caused by sound.                                  |
-| `temperature_filtered_mean`                               | The filtered mean temperature.                                         |
-| `indoor_air_quality_filtered_mean`                        | The filtered mean indoor air quality.                                  |
-| `air_humidity_filtered_mean`                              | The filtered mean air humidity.                                        |
+| Column Name                                               | Description                                                                      |
+|-----------------------------------------------------------|----------------------------------------------------------------------------------|
+| `id`                                                      | The somnofy unique identifier for the session.                                   |
+| `state`                                                   | Indicates if the session is ENDED or IN-PROGRESS                                 |
+| `subject_id`                                              | The unique ID of the subject associated with this session.                       |
+| `device_serial_number`                                    | Serial number of the Somnofy device which recorded the session.                  |
+| `epoch_count`                                             | The number of 30s epochs in the session.                                         |
+| `session_start`                                           | The timestamp for start of the session.                                          |
+| `relative_session_start`                                  | @TODO check somnofy                                                              |
+| `session_end`                                             | The timestamp for end of the session.                                            |
+| `time_at_last_epoch`                                      | The timestamp  the last epoch of the session.                                    |
+| `time_at_intended_sleep`                                  | The time of sleep attempt.                                                       |
+| `time_at_intended_wakeup`                                 | @TODO CHECK SOMNOFY                                                              |
+| `time_in_undefined`                                       | The time spent in undefined (sleep) stage.                                       |
+| `time_at_sleep_onset`                                     | The fall asleep time.                                                            |
+| `time_at_wakeup`                                          | The wakeup time.                                                                 |
+| `time_at_midsleep`                                        | Time at the mid-point between sleep onset and wakeup.                            |
+| `sleep_onset_latency`                                     | The time it took to fall asleep in seconds (from intended sleep to sleep onset). |
+| `sleep_period`                                            | The duration of the sleep session [s].                                           |
+| `time_in_bed`                                             | The total time spent in bed [s].                                                 |
+| `time_asleep`                                             | The total time scored as asleep in the session [s].                              |
+| `sleep_efficiency`                                        | The efficiency of sleep.                                                         |
+| `time_in_light_sleep`                                     | The time spent in light sleep [s].                                               |
+| `time_in_rem_sleep`                                       | The time spent in REM sleep [s].                                                 |
+| `time_in_deep_sleep`                                      | The time spent in deep sleep [s].                                                |
+| `time_in_no_presence`                                     | The time spent with no presence detected [s]                                     |
+| `number_of_times_no_presence`                             | The number of times no presence was detected.                                    |
+| `time_wake_after_sleep_onset`                             | The time spent awake after sleep onset.                                          |
+| `number_of_times_awake`                                   | The number of times the subject woke up.                                         |
+| `number_of_times_awake_long`                              | The number of times the subject woke up for a long duration.                     |
+| `time_wake_pre_post_sleep`                                | The time spent awake before and after sleep.                                     |
+| `time_from_sleep_onset_to_first_rem`                      | The period of REM sleep onset.                                                   |
+| `movement_fast_during_sleep_period_mean`                  | The mean movement during sleep.                                                  |
+| `rpm_non_rem_filtered_mean`                               | The mean RPM (respirations per minute) during non-REM sleep.                     |
+| `rpm_non_rem_mean_var`                                    | Variance of the RPM during non-REM sleep.                                        |
+| `rpm_non_rem_baseline`                                    | Baseline of the RPM during non-REM sleep.                                        |
+| `rpm_non_rem_baseline_std`                                | Standard deviation of the baseline of the RPM during non-REM sleep.              |
+| `heart_rate_non_rem_filtered_mean`                        | The mean heart rate during non-REM sleep.                                        |
+| `heart_rate_non_rem_mean`                                 | The non-filtered mean heart rate during non-REM sleep.                           |
+| `external_heart_rate_non_rem_filtered_mean`               | The mean external heart rate during non-REM sleep.                               |
+| `epochs_with_movement_pct`                                | The percentage of epochs with movement.                                          |
+| `epochs_with_movement_during_time_in_bed_pct`             | The percentage of epochs with movement while in bed.                             |
+| `time_with_movement_pct`                                  | The percentage of time with movement.                                            |
+| `time_with_movement_during_time_in_bed_pct`               | The percentage of time in bed with movement.                                     |
+| `sleep_cycle_count`                                       | Number of sleep cycles in the session.                                           |
+| `is_workday`                                              | Whether the session was on a work day                                            |
+| `chronotype`                                              | The chronotype for this session, i.e. the time at mid-sleep, in hours.           |
+| `social_jet_lag`                                          | @TODO: CHECK SOMNOFY                                                             |
+| `jet_lag`                                                 | @TODO: CHECK SOMNOFY                                                             |
+| `regularity`                                              | @TODO: CHECK SOMNOFY                                                             |
+| `sleep_score_standard`                                    | The sleep score based on the standard scoring method.                            |
+| `sleep_fragmentation`                                     | @TODO: CHECK SOMNOFY                                                             |
+| `external_spo2_mean`                                      | The mean external SpO2 level.                                                    |
+| `external_spo2_min`                                       | The minimum external SpO2 level.                                                 |
+| `distance_during_sleep_mean`                              | Mean distance from the sensor during sleep.                                      |
+| `distance_during_sleep_std`                               | Standard deviation of the distance from sensor during sleep.                     |
+| `air_pressure_filtered_mean`                              | The filtered mean air pressure.                                                  |
+| `light_ambient_filtered_mean`                             | The filtered mean ambient light level.                                           |
+| `light_ambient_at_wakeup_mean`                            | The mean ambient light level at wake-up time.                                    |
+| `sound_amplitude_filtered_mean`                           | The filtered mean sound amplitude.                                               |
+| `sound_amplitude_during_sleep_filtered_for_noise_mean`    | The mean sound amplitude during sleep, filtered for noise.                       |
+| `sound_amplitude_during_sleep_filtered_for_movement_mean` | The mean sound amplitude during sleep, filtered for movement.                    |
+| `sound_amplitude_at_wake_up`                              | The sound amplitude at wake-up time.                                             |
+| `epochs_with_sound_spikes_during_sleep_count`             | Number of epochs that had sound spikes during sleep.                             |
+| `awakenings_caused_by_sound_count`                        | Number of awakenings caused by sound.                                            |
+| `temperature_filtered_mean`                               | The filtered mean temperature.                                                   |
+| `indoor_air_quality_filtered_mean`                        | The filtered mean indoor air quality.                                            |
+| `air_humidity_filtered_mean`                              | The filtered mean air humidity.                                                  |
 
 ### All sessions report
 
