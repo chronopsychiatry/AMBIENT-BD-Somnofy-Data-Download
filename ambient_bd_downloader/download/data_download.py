@@ -123,7 +123,13 @@ class DataDownloader:
                 last_session = s_json
 
             if len(subject_flags) > 0:
-                subject_qc = self.qc.update_subject_qc(subject_qc, subject_flags, len(sessions), n_flags, n_short, sub)
+                subject_qc = self.qc.update_subject_qc(
+                    subject_qc,
+                    subject_flags,
+                    n_sessions = len(long_sessions),
+                    n_sessions_flagged = n_flags,
+                    n_short_sessions = n_short,
+                    subject = sub)
 
         if len(session_qc) == 0:
             self._logger.info('No flags were raised! No quality reports to save.')
