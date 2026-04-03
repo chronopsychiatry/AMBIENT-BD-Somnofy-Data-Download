@@ -1,3 +1,8 @@
+# 0.7.4 (03/04/2026)
+
+- Make `exclude_subjects` case-insensitive (e.g. "test" will also exclude Test and TEST)
+- Exclude short sessions from `n_sessions` and `fraction_flagged` in `participant_qc` (quality report)
+
 # 0.7.3 (23/03/2026)
 
 - Remove an unused field in the config created from `ambient_generate_config`
