@@ -88,7 +88,7 @@ class Somnofy:
         for subject in subjects:
             if ((subject.identifier in subject_name or '*' in subject_name)
                     and (subject.device in device_name or '*' in device_name)
-                and (exclude_subjects not in subject.identifier or exclude_subjects == "*")):
+                and (exclude_subjects.lower() not in subject.identifier.lower() or exclude_subjects == "*")):
                 selected_subjects.append(subject)
         return selected_subjects
 
