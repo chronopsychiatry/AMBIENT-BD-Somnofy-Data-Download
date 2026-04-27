@@ -1,3 +1,8 @@
+# 0.7.5 (27/04/2026)
+
+- Quality report: include participants with no flags in the "participant_qc" report
+  - Sort participants by `fraction_flagged`, then by `participant_id`
+
 # 0.7.4 (03/04/2026)
 
 - Make `exclude_subjects` case-insensitive (e.g. "test" will also exclude Test and TEST)
