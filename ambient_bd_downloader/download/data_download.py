@@ -122,7 +122,7 @@ class DataDownloader:
 
                 last_session = s_json
 
-            if len(subject_flags) > 0:
+            if len(long_sessions) > 0:
                 subject_qc = self.qc.update_subject_qc(
                     subject_qc,
                     subject_flags,
@@ -217,7 +217,7 @@ class DataDownloader:
 
     def save_subject_qc(self, subject_qc: list[dict], start_date: str, end_date: str):
         df = (pd.DataFrame(subject_qc)
-              .sort_values('fraction_flagged', ascending=False)
+              .sort_values(['fraction_flagged', 'participant_id'], ascending=[False, True])
               )
         path = self._resolver.get_subject_qc(start_date, end_date)
         df.to_csv(path, index=False)

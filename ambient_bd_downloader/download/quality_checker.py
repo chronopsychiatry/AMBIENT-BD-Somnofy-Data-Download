@@ -167,7 +167,10 @@ class QualityChecker:
         new_row['n_sessions_flagged'] = n_sessions_flagged
         new_row['total_sessions'] = n_sessions
         new_row['fraction_flagged'] = round(n_sessions_flagged / n_sessions, 2)
-        new_row['flags'] = ', '.join(subject_flags)
+        if n_sessions_flagged > 0:
+            new_row['flags'] = ', '.join(subject_flags)
+        else:
+            new_row['flags'] = 'no flags'
 
         subject_qc.append(new_row)
 
