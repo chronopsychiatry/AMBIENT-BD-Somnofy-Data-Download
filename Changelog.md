@@ -1,3 +1,8 @@
+# 0.8.0 (08/05/2026)
+
+- Enabled login using credentials file (no more URL copying)
+  - Login using client_id is still possible
+
 # 0.7.5 (27/04/2026)
 
 - Quality report: include participants with no flags in the "participant_qc" report

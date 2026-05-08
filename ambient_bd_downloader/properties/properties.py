@@ -6,6 +6,7 @@ from pathlib import Path
 class Properties():
     def __init__(self,
                  client_id_file: str | Path = None,
+                 credentials_file: str | Path = None,
                  zone: str | list[str] = None,
                  device: str | list[str] = None,
                  subject: str | list[str] = None,
@@ -24,14 +25,19 @@ class Properties():
                  min_session_separation: float = None
                  ):
 
-        self.client_id_file = Path(client_id_file or './client_id.txt')
+        self.client_id_file = Path(client_id_file) if client_id_file else None
+        self.credentials_file = Path(credentials_file) if credentials_file else None
+        self.credentials = load_credentials(self.credentials_file) or {}
         self.zone_name = [z.strip() for z in zone.split(',')]
         self.device_name = [d.strip() for d in device.split(',')] or '*'
         self.subject_name = [s.strip() for s in subject.split(',')] or '*'
         self.exclude_subjects = exclude_subjects or '*'
         self.download_folder = Path(download_dir or '../downloaded_data')
-        with self.client_id_file.open('r') as f:
-            self.client_id = f.readline().strip(' \t\n\r')
+        if client_id_file:
+            with self.client_id_file.open('r') as f:
+                self.client_id = f.readline().strip(' \t\n\r')
+        else:
+            self.client_id = None
         from_date = from_date or datetime.datetime.now() - datetime.timedelta(days=14)
         if isinstance(from_date, str):
             from_date = datetime.datetime.fromisoformat(from_date)
@@ -75,6 +81,23 @@ def load_application_properties(file_path: str | Path = './ambient_downloader.pr
         quality = {k.replace('-', '_'): v for k, v in config['QUALITY_REPORT'].items()}
         return Properties(**quality)
 
+    
 def check_dates(from_date, to_date):
     if from_date > to_date:
         raise ValueError(f'from-date ({from_date}) cannot be after to-date ({to_date})')
+
+
+def load_credentials(credentials_file: str | Path) -> dict:
+    if credentials_file is None:
+        return None
+    file_path = Path(credentials_file)
+    if not file_path.exists():
+        raise ValueError(f"Credentials file not found: {file_path}.")
+    creds={}
+    with file_path.open('r') as f:
+        for line in f:
+            line = line.strip()
+            if line and '=' in line:
+                key, value = line.split('=', 1)
+                creds[key.strip()] = value.strip()
+    return(creds)

@@ -6,6 +6,7 @@ import hashlib
 import webbrowser
 import logging
 from pathlib import Path
+import requests
 
 from ambient_bd_downloader.sf_api.dom import Subject, Session
 from ambient_bd_downloader.properties.properties import Properties
@@ -20,9 +21,7 @@ class Somnofy:
     def __init__(self, properties: Properties):
         self._logger = logging.getLogger('Somnofy')
         self.client_id = properties.client_id
-        if not self.client_id:
-            raise ValueError('Client ID must be provided')
-        self.token_file = Path(properties.client_id_file).parent / 'token.txt'
+        self.token_file = Path(properties.client_id_file).parent / 'token.txt' if self.client_id else None
         self.token_url = 'https://auth.somnofy.com/oauth2/token'
         self.subjects_url = self.API_ENDPOINT + '/subjects'
         self.sessions_url = self.API_ENDPOINT + '/sessions'
@@ -32,7 +31,36 @@ class Somnofy:
         self.date_start = '2023-08-01T00:00:00Z'
         self.date_end = datetime.datetime.now().isoformat()
         self.LIMIT = 300
-        self.oauth = self.set_auth(properties.client_id)
+        self.oauth = self.set_auth(properties.client_id) if self.client_id else None
+        self.headers = self.get_headers(properties) if properties.credentials else None
+        if self.oauth is None and self.headers is None:
+            raise(ValueError("client_id or credentials must be provided"))
+
+    def get_headers(self, properties: Properties) -> dict:
+        creds = properties.credentials
+        token = self.get_access_token(
+            client_id=creds['client-id'],
+            client_secret=creds['client-secret'],
+            username=creds['username'],
+            password=creds['password']
+        )
+        return {
+            "accept": "application/json",
+            "Authorization": f"Bearer {token}"
+        }
+
+    def get_access_token(self, client_id: str, client_secret: str, username: str, password: str) -> str:
+        response = requests.post(
+            self.token_url,
+            data={
+                "grant_type": "password",
+                "username": username,
+                "password": password,
+            },
+            auth=(client_id, client_secret),
+        )
+        response.raise_for_status()
+        return response.json()['access_token']
 
     def set_auth(self, client_id: str):
         if (oauth := self.auth_with_old_token(client_id)):
@@ -76,9 +104,15 @@ class Somnofy:
             f.write(token['access_token'])
         return oauth
 
+    def make_request(self, url: str, params: dict = {}):
+        if self.oauth:
+            return self.oauth.get(url, params=params)
+        elif self.headers:
+            return requests.get(url, headers=self.headers, params=params)
+        
     def get_subjects(self, zone_name: str) -> list[Subject]:
         zone_id = self.get_zone_id(zone_name)
-        r = self.oauth.get(self.subjects_url, params={'path': zone_id, 'embed': 'devices'})
+        r = self.make_request(self.subjects_url, params={'path': zone_id, 'embed': 'devices'})
         json_list = r.json()["data"]
         return [Subject(subject_data) for subject_data in json_list]
 
@@ -130,7 +164,7 @@ class Somnofy:
         are_more = True
         sessions = []
         while are_more:
-            r = self.oauth.get(self.sessions_url, params=params)
+            r = self.make_request(self.sessions_url, params=params)
             json_list = r.json()['data']
             sessions += [Session(data) for data in json_list]
             are_more = len(json_list) == self.LIMIT
@@ -141,26 +175,26 @@ class Somnofy:
     def get_session_json(self, session_id: str) -> dict:
         url = f'{self.sessions_url}/{session_id}'
         params = {'include_epoch_data': True}
-        r = self.oauth.get(url, params=params)
+        r = self.make_request(url, params=params)
         return r.json()
 
     def get_session_report(self, subject_id: str, date: str) -> dict:
         params = {'subjects': subject_id, 'report_date': date}
-        r = self.oauth.get(self.reports_url, params=params)
+        r = self.make_request(self.reports_url, params=params)
         return r.json()
 
     def get_zone_id(self, zone_name: str) -> str:
-        r = self.oauth.get(self.zones_url)
+        r = self.make_request(self.zones_url)
         available_zones = {zone['name']: zone['id'] for zone in r.json()['data']}
         if zone_name not in available_zones:
             raise ValueError(f'Zone "{zone_name}" not found. Available zones: {list(available_zones.keys())}')
         return available_zones[zone_name]
 
     def get_all_zones(self) -> list[str]:
-        r = self.oauth.get(self.zones_url)
+        r = self.make_request(self.zones_url)
         return [zone['name'] for zone in r.json()['data']]
 
     def has_zone_access(self, zone_name: str) -> bool:
         zone_id = self.get_zone_id(zone_name)
-        r = self.oauth.get(self.subjects_url, params={'path': zone_id})
+        r = self.make_request(self.subjects_url, params={'path': zone_id})
         return True if r.status_code == 200 else False

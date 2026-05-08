@@ -28,7 +28,12 @@ def main():
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
 
-    logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
+    if properties.client_id_file:
+        logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
+    elif properties.credentials_file:
+        logger.info(f'Accessing somnofy with credentials stored at: {properties.credentials_file}')
+    else:
+        logger.error('One of client_id or credentials must be provided')
     somnofy = Somnofy(properties)
 
     zones_to_access = somnofy.get_all_zones() if properties.zone_name == ['*'] else properties.zone_name
