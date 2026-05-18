@@ -31,7 +31,7 @@ class Somnofy:
         self.date_start = '2023-08-01T00:00:00Z'
         self.date_end = datetime.datetime.now().isoformat()
         self.LIMIT = 300
-        self.oauth = self.set_auth(properties.client_id) if self.client_id else None
+        self.oauth = self.set_auth(properties.client_id) if self.client_id and not properties.credentials else None
         self.headers = self.get_headers(properties) if properties.credentials else None
         if self.oauth is None and self.headers is None:
             raise(ValueError("client_id or credentials must be provided"))

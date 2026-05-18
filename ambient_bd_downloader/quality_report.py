@@ -32,8 +32,11 @@ def quality_report():
     logger.debug('This is a test debug message')
     logger.info(f'Running ambient_bd_downloader version {version}')
     logger.info(f'Properties: {properties}')
-    
-    logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
+
+    if properties.credentials_file:
+        logger.info(f'Accessing somnofy with credentials stored at: {properties.credentials_file}')
+    elif properties.client_id_file:
+        logger.info(f'Accessing somnofy with client ID stored at: {properties.client_id_file}')
     somnofy = Somnofy(properties)
     qc = QualityChecker(
         min_distance=properties.min_distance,

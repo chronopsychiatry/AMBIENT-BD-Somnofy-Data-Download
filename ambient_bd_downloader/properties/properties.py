@@ -60,7 +60,7 @@ class Properties():
         self.min_session_separation = float(min_session_separation or 0)
 
     def __str__(self):
-        return f"Properties({', '.join(f'{k}={v}' for k, v in vars(self).items() if k != 'client_id')})"
+        return f"Properties({', '.join(f'{k}={v}' for k, v in vars(self).items() if k not in ['client_id', 'credentials'])})"
 
 
 def load_application_properties(file_path: str | Path = './ambient_downloader.properties', output_type: str = 'download'):

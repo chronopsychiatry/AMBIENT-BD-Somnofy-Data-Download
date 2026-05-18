@@ -1,3 +1,7 @@
+# 0.8.1 (18/05/2026)
+
+- In case both credentials and client ID are provided, use credentials (one less step)
+
 # 0.8.0 (08/05/2026)
 
 - Enabled login using credentials file (no more URL copying)
