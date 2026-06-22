@@ -48,9 +48,22 @@ Parameters under the [DEFAULT] heading will be taken into account for both data 
 
 ##### client-id-file
 
-Path to the the `.txt` file containing the client ID. The file must only contain the client ID.
+Path to the `.txt` file containing the client ID. The file must only contain the client ID.
 
 Default value: `./client_id.txt`
+
+This parameter will be ignored if `credentials-file` is also provided (see below).
+
+##### credentials-file
+
+Path to a `.txt` file containing full credentials (obtained from VitalThings). The file must contain the following fields (one per line, in format `field=value`).
+
+- `client-id`
+- `client-secret`
+- `username`
+- `password`
+
+When using full credentials, it is not necessary to authenticate in the browser.
 
 ##### download-dir
 
@@ -108,6 +121,10 @@ To download the data, navigate to the folder that contains the `ambient_download
 ```bash
 ambient_download
 ```
+
+If authenticating using a client ID, you will be prompted to log in in a web browser. After logging in, a blank page is displayed, and its URL must be pasted in the terminal to complete authentication and start the download. Subsequent runs on the same day will not required logging in.
+
+If using full credentials, no log in step is necessary.
 
 ### Quality report
 
