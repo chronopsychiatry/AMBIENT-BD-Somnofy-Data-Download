@@ -161,15 +161,19 @@ class Somnofy:
                                      from_date: datetime.date | str = None,
                                      to_date: datetime.date | str = None) -> list[Session]:
         params = self._make_sessions_params(subject_id=subject_id, from_date=from_date, to_date=to_date)
-        are_more = True
         sessions = []
-        while are_more:
+        last_json_list = None
+        are_new_sessions = True
+        while are_new_sessions:
             r = self.make_request(self.sessions_url, params=params)
             json_list = r.json()['data']
-            sessions += [Session(data) for data in json_list]
-            are_more = len(json_list) == self.LIMIT
-            if are_more:
-                params['from'] = datetime.datetime.fromisoformat(json_list[-1]['session_start'])
+            if len(json_list) == 0:
+                return sessions
+            are_new_sessions = last_json_list is None or json_list != last_json_list
+            if are_new_sessions:
+                sessions += [Session(data) for data in json_list]
+                last_json_list = json_list
+                params['from'] = datetime.datetime.fromisoformat(json_list[-1]['session_end'])
         return sessions
 
     def get_session_json(self, session_id: str) -> dict:

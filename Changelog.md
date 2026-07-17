@@ -1,3 +1,8 @@
+# 0.8.2 (17/07/2026)
+
+- Fixed a bug where only 299 sessions were downloaded for some participants, even though more sessions were available in the date range
+  - This was due to the VT API randomly returning 299 (or 298) sessions instead of 300 when limit is set to 300
+
 # 0.8.1 (18/05/2026)
 
 - In case both credentials and client ID are provided, use credentials (one less step)

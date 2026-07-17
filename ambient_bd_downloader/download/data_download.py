@@ -37,7 +37,7 @@ class DataDownloader:
                           force_saved_date: bool = True):
         self._logger.info(f'{subject}')
         start_date = self.calculate_start_date(subject.identifier, start_date, force_saved_date)
-        self._logger.info(f'Downloading data for subject {subject.identifier} starting from {start_date}')
+        self._logger.info(f'Downloading data for subject {subject.identifier}')
         sessions = self._somnofy.get_all_sessions_for_subject(subject.id, start_date, end_date)
 
         if len(sessions) == 0:
