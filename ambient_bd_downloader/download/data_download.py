@@ -244,7 +244,12 @@ class DataDownloader:
 
     def append_to_global_reports(self, reports: pd.DataFrame, subject_id: str):
         file = self._resolver.get_subject_global_report(subject_id)
-        all_sessions_report = pd.concat([pd.read_csv(file), reports])
+
+        if file.exists():
+            all_sessions_report = pd.concat([pd.read_csv(file), reports])
+        else:
+            all_sessions_report = reports
+
         all_sessions_report.to_csv(file, index=False)
 
     def save_compliance_info(self,
