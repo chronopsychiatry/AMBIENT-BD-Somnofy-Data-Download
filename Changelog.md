@@ -1,3 +1,7 @@
+# 0.8.3 (27/07/2026)
+
+- Fixed a bug where the "all_sessions_reports.csv" table could have its columns shifted if a new column was added by VT to the sessions data
+
 # 0.8.2 (17/07/2026)
 
 - Fixed a bug where only 299 sessions were downloaded for some participants, even though more sessions were available in the date range
