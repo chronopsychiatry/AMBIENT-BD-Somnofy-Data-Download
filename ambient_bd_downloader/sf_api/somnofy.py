@@ -7,6 +7,9 @@ import webbrowser
 import logging
 from pathlib import Path
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from typing import Dict, Any
 
 from ambient_bd_downloader.sf_api.dom import Subject, Session
 from ambient_bd_downloader.properties.properties import Properties
@@ -104,25 +107,50 @@ class Somnofy:
             f.write(token['access_token'])
         return oauth
 
-    def make_request(self, url: str, params: dict = {}):
+    def make_request(self, url: str, params: dict = {}, timeout: int = 10) -> requests.Response:
+
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=['GET'],
+            backoff_factor=1,
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+
         if self.oauth:
-            return self.oauth.get(url, params=params)
+            self.oauth.mount("http://", adapter)
+            self.oauth.mount("https://", adapter)
+            return self.oauth.get(url, params=params, timeout=timeout)
+
         elif self.headers:
-            return requests.get(url, headers=self.headers, params=params)
-        
+            with requests.Session() as session:
+                session.mount("http://", adapter)
+                session.mount("https://", adapter)
+                session.headers.update(self.headers)
+
+                response = session.get(url, params=params, timeout=timeout)
+                return response
+        else:
+            return ValueError("No authentication method found (credentials or client ID).")
+
     def get_subjects(self, zone_name: str) -> list[Subject]:
         zone_id = self.get_zone_id(zone_name)
         r = self.make_request(self.subjects_url, params={'path': zone_id, 'embed': 'devices'})
         json_list = r.json()["data"]
         return [Subject(subject_data) for subject_data in json_list]
 
-    def select_subjects(self, zone_name: str, subject_name: str = '*', exclude_subjects: str = '*', device_name: str = '*') -> list[Subject]:
+    def select_subjects(self,
+                        zone_name: str,
+                        subject_name: str = '*',
+                        exclude_subjects: str = '*',
+                        device_name: str = '*') -> list[Subject]:
         subjects = self.get_subjects(zone_name)
         selected_subjects = []
         for subject in subjects:
             if ((subject.identifier in subject_name or '*' in subject_name)
                     and (subject.device in device_name or '*' in device_name)
-                and (exclude_subjects.lower() not in subject.identifier.lower() or exclude_subjects == "*")):
+                    and (exclude_subjects.lower() not in subject.identifier.lower() or exclude_subjects == "*")):
                 selected_subjects.append(subject)
         return selected_subjects
 

@@ -1,3 +1,7 @@
+# 0.8.4 (02/11/2026)
+
+- Retry GET requests up to 3 times if the server does not respond
+
 # 0.8.3 (27/07/2026)
 
 - Fixed a bug where the "all_sessions_reports.csv" table could have its columns shifted if a new column was added by VT to the sessions data
